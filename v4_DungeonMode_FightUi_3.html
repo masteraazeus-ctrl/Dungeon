@@ -1,0 +1,3608 @@
+<!DOCTYPE html>
+<html lang="de"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,maximum-scale=1" name="viewport"/>
+<title>v3 test 4 – Status Effekte</title>
+<style>
+body{margin:0;background:#0f0f12;color:#eee;font-family:system-ui,sans-serif;display:flex;justify-content:center}
+.wrap{width:min(1040px,100vw);padding:14px}
+.panel{background:#17171d;border:1px solid #2a2a33;border-radius:14px;padding:14px;margin-bottom:12px}
+.top{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.name{font-weight:700;font-size:18px;margin-bottom:6px}
+.bar{height:14px;background:#2a2a33;border-radius:999px;overflow:hidden}
+.fill{height:100%;width:100%}
+.hptext{opacity:.9;font-size:13px;margin-top:6px}
+.badge{display:inline-block;padding:3px 8px;border:1px solid #2a2a33;border-radius:999px;font-size:12px;opacity:.95}
+.actions{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}
+button{padding:12px;border-radius:12px;border:1px solid #2a2a33;background:#1e1e26;color:#eee;font-size:16px}
+button:disabled{opacity:.45}
+.row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.row button{flex:1}
+.log{margin-top:12px;max-height:360px;overflow:auto;font-size:14px;line-height:1.35}
+.small{opacity:.8;font-size:13px;margin-top:8px;line-height:1.35}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+select,input{width:100%;padding:10px;border-radius:12px;border:1px solid #2a2a33;background:#101016;color:#eee}
+label{display:block;font-size:12px;opacity:.85;margin-bottom:6px}
+.field{margin-top:10px}
+.uses{font-size:12px;opacity:.92;line-height:1.35;margin-top:6px}
+.uses code{background:#101016;border:1px solid #2a2a33;border-radius:8px;padding:2px 6px}
+.kpi{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.checklist{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.checkitem{display:flex;align-items:flex-start;gap:10px;padding:10px;border:1px solid #2a2a33;border-radius:12px;background:#101016}
+.checkitem input{width:auto;margin-top:2px}
+.muted{opacity:.75}
+.skillBar{margin-top:10px}
+
+/* -------- Dungeon Fullscreen Screens -------- */
+.screen{position:fixed;inset:0;background:#0f0f12;color:#eee;display:none;overflow:auto;z-index:50}
+.screen .wrap{width:min(1040px,100vw);padding:14px;margin:0 auto}
+.screenHeader{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:6px 0 12px}
+.screenTitle{font-weight:800;font-size:18px}
+.bigBtn{padding:14px;border-radius:14px;border:1px solid #2a2a33;background:#1e1e26;color:#eee;font-size:18px;width:100%}
+.card{border:1px solid #2a2a33;border-radius:14px;background:#17171d;padding:14px;margin-top:12px}
+.cardTitle{font-weight:700;margin-bottom:8px}
+.lootRow{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px;border:1px solid #2a2a33;border-radius:12px;background:#101016;margin-top:10px}
+.lootRow label{display:flex;align-items:center;gap:10px;margin:0}
+.lootRow input{width:auto}
+hr.sep{border:0;border-top:1px solid #2a2a33;margin:12px 0;opacity:.8}
+
+
+.invEquipRow{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.invEquipRow .meta{display:flex;flex-direction:column;gap:2px}
+.invEquipRow .meta .title{font-weight:700}
+.invEquipRow .meta .sub{font-size:12px;opacity:.75}
+.invEquipRow button{padding:10px 12px;font-size:14px;border-radius:10px}
+.invEquippedBadge{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;border:1px solid #2a2a33;font-size:12px;opacity:.95}
+
+
+/* ===== Inventory Grid (fixed slots) ===== */
+.invGrid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+.invCard{
+  border:1px solid #2a2a33;
+  border-radius:12px;
+  background:#17171d;
+  padding:10px;
+  min-height:72px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.invCard.placeholder{
+  background:#0f0f12;
+  border-style:dashed;
+  opacity:.6;
+}
+.invCard .meta{display:flex;flex-direction:column;gap:4px}
+.invCard .title{font-weight:700;font-size:14px}
+.invCard .sub{font-size:12px;opacity:.75}
+.invBadge{font-size:11px;padding:2px 6px;border:1px solid #2a2a33;border-radius:999px}
+
+
+
+/* === Dungeon Fight UI (Option B: external frame image) === */
+.fightStage{
+  margin-top:12px;
+  display:flex;
+  justify-content:center;
+}
+.fightFrame{
+  position:relative;
+  width:min(520px, 92vw);
+  aspect-ratio: 2 / 3; /* frame is 1024x1536 */
+  background: url('fight_ui_frame.png') center / contain no-repeat;
+  border-radius:16px;
+  overflow:visible;
+  filter: drop-shadow(0 18px 30px rgba(0,0,0,.35));
+}
+/* If the png has transparent parts, we give the page a dark backdrop */
+.fightFrameBackdrop{
+  background: radial-gradient(120% 90% at 50% 25%, rgba(255,255,255,.06), rgba(0,0,0,0) 55%), #0b0b10;
+  border-radius:18px;
+  padding:14px;
+  width:fit-content;
+  margin:0 auto;
+}
+.fightHud{
+  position:absolute;
+  color:#e9e9ef;
+  font-weight:700;
+  text-shadow: 0 2px 8px rgba(0,0,0,.55);
+}
+.fightHud .sub{
+  font-weight:600;
+  opacity:.85;
+}
+.hpBar{
+  height:14px;
+  border-radius:999px;
+  background: rgba(0,0,0,.35);
+  border: 1px solid rgba(255,255,255,.12);
+  overflow:hidden;
+  margin-top:8px;
+}
+.hpBar > i{
+  display:block;
+  height:100%;
+  width:72%;
+  background: linear-gradient(90deg, rgba(90,190,255,1), rgba(120,220,255,1));
+}
+.hpBar.green > i{ background: linear-gradient(90deg, rgba(60,220,130,1), rgba(85,245,150,1)); width:73%; }
+.hpText{
+  margin-top:6px;
+  font-size:13px;
+  letter-spacing:.2px;
+  opacity:.9;
+}
+/* Enemy top-left inside big box */
+.enemyHud{
+  top:7%;
+  left:8%;
+  width:44%;
+  font-size:26px;
+  line-height:1.05;
+}
+.enemyHud .lvl{
+  display:inline-block;
+  margin-left:10px;
+  font-size:14px;
+  padding:4px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.25);
+}
+/* Player right side (roughly middle) */
+.playerHud{
+  top:42%;
+  right:9%;
+  width:44%;
+  text-align:right;
+  font-size:26px;
+  line-height:1.05;
+}
+.playerHud .lvl{
+  display:inline-block;
+  margin-left:10px;
+  font-size:14px;
+  padding:4px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.25);
+}
+.playerHud .uses{
+  margin-top:10px;
+  font-size:14px;
+  font-weight:600;
+  opacity:.9;
+  letter-spacing:.6px;
+}
+/* Optional: invisible clickable areas over the 4 action buttons */
+.fightHotkey{
+  position:absolute;
+  border-radius:12px;
+  background: rgba(255,255,255,0);
+  border: 1px solid rgba(255,255,255,0);
+}
+.fightHotkey:active{
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.18);
+}
+.hk-atk{ left:9%; top:57.5%; width:40%; height:7.5%; }
+.hk-hatk{ right:9%; top:57.5%; width:40%; height:7.5%; }
+.hk-dodge{ left:9%; top:66.2%; width:40%; height:7.5%; }
+.hk-block{ right:9%; top:66.2%; width:40%; height:7.5%; }
+/* Skill grid area (visual placeholder) */
+.skillArea{
+  position:absolute;
+  left:7.5%;
+  right:7.5%;
+  bottom:7.5%;
+  height:24%;
+  border-radius:14px;
+  pointer-events:none;
+}
+</style>
+</head><body>
+<div class="wrap">
+<h2 style="margin:6px 0 12px;">v3 test 4 – Status Effekte (Resistent/Gift/Burn + Items + Skills)</h2>
+<div class="panel top">
+<div>
+<div class="name">Spieler 1 <span class="badge" id="p1Pick" style="display:none"></span></div>
+<div class="bar"><div class="fill" id="p1Fill" style="background:#7dd3fc"></div></div>
+<div class="hptext" id="p1Text"></div>
+<div class="hptext" id="p1Meta"></div>
+<div class="kpi" id="p1Kpi"></div>
+<div class="uses" id="p1UsesText"></div>
+<div class="uses" id="p1SkillsText"></div>
+<div class="hptext" id="p1Status"></div>
+<div class="hptext" id="p1Temp"></div>
+</div>
+<div>
+<div class="name">Spieler 2 <span class="badge" id="p2Pick" style="display:none"></span></div>
+<div class="bar"><div class="fill" id="p2Fill" style="background:#fca5a5"></div></div>
+<div class="hptext" id="p2Text"></div>
+<div class="hptext" id="p2Meta"></div>
+<div class="kpi" id="p2Kpi"></div>
+<div class="uses" id="p2UsesText"></div>
+<div class="uses" id="p2SkillsText"></div>
+<div class="hptext" id="p2Status"></div>
+<div class="hptext" id="p2Temp"></div>
+</div>
+</div>
+<div class="panel" id="setupPanel">
+<div class="badge" id="setupPhaseText">Setup</div>
+<div class="grid2" id="modeGrid">
+<div class="field">
+<label for="modeSelect">Playmode</label>
+<select id="modeSelect">
+<option value="PVP">Player vs Player</option>
+<option value="PVE">Player vs NPC</option>
+<option value="NVN">NPC vs NPC (Simulation)</option>
+<option value="DUNGEON">Dungeon</option>
+</select>
+</div>
+<div class="field" id="runsField" style="display:none">
+<label for="runsInput">Runs (Kämpfe)</label>
+<input id="runsInput" max="5000" min="1" step="1" type="number" value="100"/>
+</div>
+<div class="field" id="npcHintField" style="display:none">
+<label>NPC</label>
+<div class="small muted">In PVE ist Spieler 2 ein NPC und wählt automatisch.</div>
+</div>
+</div>
+<div class="grid2" id="npcAiGrid" style="display:none">
+<div class="field">
+<label for="aiIntInput">NPC AI Int (1–10)</label>
+<input id="aiIntInput" max="10" min="1" step="1" type="number" value="5"/>
+</div>
+<div class="field">
+<label for="aiStanceSelect">NPC Verhalten</label>
+<select id="aiStanceSelect">
+<option value="AGGRESSIVE">Aggressiv</option>
+<option selected="" value="NEUTRAL">Neutral</option>
+<option value="DEFENSIVE">Defensiv</option>
+</select>
+</div>
+</div>
+<div class="grid2">
+<div class="field" id="classField">
+<label for="classSelect">Klasse</label>
+<select id="classSelect">
+<option value="KNIGHT">Knight</option>
+<option value="BERSERK">Berserk</option>
+<option value="ASSASSIN">Assasine</option>
+<option value="MAGE">Mage</option>
+<option value="SLIME">Slime</option>
+</select>
+</div>
+<div class="field" id="levelField">
+<label for="levelInput">Level</label>
+<input id="levelInput" max="99" min="1" step="1" type="number" value="1"/>
+</div>
+</div>
+<div class="field" id="weaponField" style="display:none">
+<label for="weaponSelect">Waffe</label>
+<select id="weaponSelect">
+<option value="SHORT_SWORD">Short Sword</option>
+<option value="KATANA">Katana</option>
+<option value="MACE">Mace</option>
+<option value="MAGIC_WAND">Magic Wand</option>
+<option value="SLIME_ATTACK">Slime Attack</option>
+</select>
+<div class="field" style="margin-top:10px">
+<label for="armorSelect">Rüstung</label>
+<select id="armorSelect">
+<option value="NONE">Keine</option>
+<option value="STARTER_GEAR">Starter Gear (-10% Slash/Strike)</option>
+<option value="ARMOR_SLASH">Rüstung: Slash -50%</option>
+<option value="ARMOR_STRIKE">Rüstung: Strike -50%</option>
+<option value="ARMOR_PROJECTILE">Rüstung: Projectile -50%</option>
+</select>
+</div>
+<div class="small muted">Skill Slots kommen von der Waffe.</div>
+</div>
+<div class="field" id="skillsField" style="display:none">
+<label>Skills ausrüsten (max. Slots)</label>
+<div class="small muted">Skills können nur zu Waffentyp passen (slash/strike/projectile). Ausgerüstete Skills werden im Kampf bei Erfolg „freigeschaltet“ (nächste Runde, 1 Use).</div>
+<div class="checklist" id="skillsList"></div>
+<div class="small" id="skillsLimitHint"></div>
+</div>
+<div class="row">
+<button id="confirmSetup">Bestätigen</button>
+</div>
+<div class="small">
+      Scaling: SS=2 • S=1 • A=0.5 • B=0.3 • C=0.2 — <code>Wert = Grundwert + Level×Scaling</code><br/>
+      Damage Type hat noch keinen Einfluss (für spätere Resistenzen).<br/>
+      Block: Aktivierung+Wirkung in Speed 1 (0 Schaden). Dodge: Aktivierung+Wirkung in Speed 2 (0 Schaden).
+    </div>
+</div>
+<div class="panel" id="fightPanel" style="display:none">
+<div class="badge" id="phaseText">Phase</div>
+<div class="panel" id="simResultPanel" style="display:none;margin-top:12px">
+<div class="badge">Simulation – Auswertung</div>
+<div class="small muted" id="simSummary"></div>
+<div class="grid2" style="margin-top:10px">
+<div>
+<div class="badge">NPC 1</div>
+<div class="small" id="simNpc1Actions"></div>
+<div class="small" id="simNpc1Skills"></div>
+</div>
+<div>
+<div class="badge">NPC 2</div>
+<div class="small" id="simNpc2Actions"></div>
+<div class="small" id="simNpc2Skills"></div>
+</div>
+</div>
+<div class="small" style="margin-top:10px">
+<b>Auffällige Runs</b>
+<div class="small muted">Nur Kämpfe, die abgebrochen wurden (50-Runden-Cap oder 10 Runden ohne Schaden).</div>
+</div>
+<div class="log" id="simAnomalyLog" style="max-height:220px"></div>
+</div>
+<div class="row" style="margin-top:10px">
+<button id="itemBtn">Kampf-Item</button>
+<select id="itemSelect" style="display:none;flex:1">
+<option value="">—</option>
+<option value="RESIST_POTION">Kampf: Resistent Potion</option>
+</select>
+</div>
+<div class="small muted" id="itemInfo" style="margin-top:6px"></div>
+<div class="actions" id="baseActions">
+<button id="bATK">Angriff</button>
+<button id="bHATK">Schwerer Angriff</button>
+<button id="bDODGE">Ausweichen</button>
+<button id="bBLOCK">Block</button>
+</div>
+<div class="skillBar" id="skillActionsWrap" style="display:none">
+<div class="badge">Skills (zusätzliche Aktionen)</div>
+<div class="actions" id="skillActions"></div>
+<div class="small muted">Skills entstehen nur durch Erfolg, sind nächste Runde verfügbar und haben 1 Use.</div>
+</div>
+<div class="row">
+<button id="restart">Neustart (alles neu)</button>
+<button id="swap">Handy weitergeben</button>
+<button id="rematch" style="display:none">Rematch (Waffen neu wählen)</button>
+</div>
+<div class="small">
+      Gleicher Speed-Angriff: beide treffen gleichzeitig. Speed 0 ist nur für spezielle Angriffe (z.B. Magic Wand / Fast Attack).
+    </div>
+<div class="log" id="log"></div>
+</div>
+</div>
+<!-- ---------------- Dungeon Mode Screens ---------------- -->
+<div class="screen" id="dungeonWrap">
+<div class="wrap">
+<div class="screenHeader">
+<div class="screenTitle" id="dungeonHeaderTitle">Dungeon</div>
+<span class="badge" id="dungeonHeaderMeta">Stufe 0 • Ebene 1/5</span>
+</div>
+<!-- FIGHT -->
+<div class="card" id="dungeonFight">
+<div class="cardTitle">Kampf (Simulation)</div>
+<div class="small muted" id="dungeonFightText">Du triffst auf einen Gegner. (Platzhalter-Layout)</div>
+<div class="fightStage">
+  <div class="fightFrameBackdrop">
+    <div class="fightFrame" role="img" aria-label="Kampf-UI Rahmen">
+      <div class="fightHud enemyHud">
+        <div>Slime <span class="lvl">Lv. 1</span></div>
+        <div class="hpBar"><i></i></div>
+        <div class="hpText">18 / 25 HP</div>
+      </div>
+
+      <div class="fightHud playerHud">
+        <div>Hero <span class="lvl">Lv. 5</span></div>
+        <div class="hpBar green"><i></i></div>
+        <div class="hpText">22 / 30 HP</div>
+        <div class="uses">ATK 9&nbsp;&nbsp;|&nbsp;&nbsp;H‑ATK 5<br/>DOD 3&nbsp;&nbsp;|&nbsp;&nbsp;BLK 7</div>
+      </div>
+
+      <!-- Clickable areas (optional, for later wiring) -->
+      <button class="fightHotkey hk-atk" type="button" aria-label="Attack"></button>
+      <button class="fightHotkey hk-hatk" type="button" aria-label="Heavy Attack"></button>
+      <button class="fightHotkey hk-dodge" type="button" aria-label="Dodge"></button>
+      <button class="fightHotkey hk-block" type="button" aria-label="Block"></button>
+
+      <div class="skillArea" aria-hidden="true"></div>
+    </div>
+  </div>
+</div>
+<div class="row" style="margin-top:12px">
+<button class="bigBtn" id="dungeonFightWinBtn">Gegner besiegt (weiter zu Loot)</button>
+</div>
+<div class="row" style="margin-top:10px">
+<button id="dungeonExitBtn">Dungeon verlassen</button>
+</div>
+</div>
+<!-- LOOT -->
+<div class="card" id="dungeonLoot" style="display:none">
+<div class="cardTitle">Loot</div>
+<div class="small muted">Wähle, was du mitnehmen willst (Items funktionieren, Gold/XP sind Platzhalter).</div>
+<div class="kpi" style="margin-top:10px">
+<span class="badge" id="lootGold">Gold: —</span>
+<span class="badge" id="lootXp">XP: —</span>
+</div>
+<hr class="sep"/>
+<div id="lootItems"></div>
+<div class="row" style="margin-top:12px">
+<button class="bigBtn" id="lootConfirmBtn">Bestätigen &amp; weiter (Level-Up)</button>
+</div>
+</div>
+<!-- LEVEL UP -->
+<div class="card" id="dungeonLevelUp" style="display:none">
+<div class="cardTitle">Level-Up (Platzhalter)</div>
+<div class="small muted">Hier siehst du, wie sich deine Werte verbessern.</div>
+<div class="card" style="background:#101016">
+<div class="small" id="levelUpSummary">—</div>
+</div>
+<div class="row" style="margin-top:12px">
+<button class="bigBtn" id="levelUpContinueBtn">Weiter (Inventar)</button>
+</div>
+</div>
+<!-- INVENTORY -->
+<div class="card" id="dungeonInventory" style="display:none">
+<div class="cardTitle">Inventar</div>
+<div class="card" style="background:#101016">
+<div class="badge">Status</div>
+<div class="small" id="invStats" style="margin-top:8px">—</div>
+</div>
+<div class="card" style="background:#101016">
+<div class="badge">Dungeon-Items</div>
+<div class="small muted" style="margin-top:6px">Nur im Dungeon nutzbar (nicht im Kampf).</div>
+<div class="row" style="margin-top:10px">
+<button id="useHealBtn">Healing Potion (<span id="cntHeal">0</span>)</button>
+<button id="useChargeBtn">Aktion Charge (<span id="cntCharge">0</span>)</button>
+<button id="useCurseBtn">Fluch Potion (<span id="cntCurse">0</span>)</button>
+</div>
+<div class="small muted" id="invItemHint" style="margin-top:8px"></div>
+</div>
+<div class="card" style="background:#101016">
+<div class="badge">Ausrüstung ändern</div>
+<div class="grid2" style="margin-top:10px">
+<div>
+<div class="badge" style="margin-bottom:8px">Weapon Equipped</div>
+<div class="checkitem" id="invWeaponEquipped" style="background:#0f0f12;border-style:dashed"></div>
+<div class="badge" style="margin:14px 0 8px">Weapon Inventory</div>
+<div class="checklist" id="invWeaponList"></div>
+</div>
+<div>
+<div class="badge" style="margin-bottom:8px">Armor Equipped</div>
+<div class="checkitem" id="invArmorEquipped" style="background:#0f0f12;border-style:dashed"></div>
+<div class="badge" style="margin:14px 0 8px">Armor Inventory</div>
+<div class="checklist" id="invArmorList"></div>
+</div>
+</div>
+<div id="merchantShopBox" style="margin-top:10px"></div>
+<div class="field" style="margin-top:10px">
+<label>Skills ausrüsten (max. Slots)</label>
+<div class="small muted">Nur Skills passend zum Waffentyp. Slots kommen von der Waffe.</div>
+<div class="checklist" id="invSkillsList" style="margin-top:10px"></div>
+<div class="small" id="invSkillsLimitHint"></div>
+</div>
+<div class="row" style="margin-top:12px">
+<button id="invApplyEquipBtn">Ausrüstung übernehmen</button>
+</div>
+</div>
+<div class="row" style="margin-top:12px">
+<button class="bigBtn" id="invNextFloorBtn">Ebene verlassen → nächste Ebene</button>
+</div>
+</div>
+</div>
+</div>
+<script>
+(() => {
+  const logEl = document.getElementById("log");
+  const log = (m) => { logEl.innerHTML = m + "<br/>" + logEl.innerHTML; };
+  const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+
+  // ---------------- Scaling ----------------
+  const SCALE = { SS:2, S:1, A:0.5, B:0.3, C:0.2, N:0 };
+  const scaled = (base, level, key) => base + (level * (SCALE[key] ?? 0));
+  const ceil = (x) => Math.max(0, Math.ceil(x));
+  const floor = (x) => Math.max(0, Math.floor(x));
+
+  // ---------------- Core IDs ----------------
+  const ACTION_IDS = ["ATK","HATK","DODGE","BLOCK"];
+
+  // ---------------- Classes ----------------
+  const CLASSES = {
+    KNIGHT:   { label:"Knight",   hp:{base:120,scale:"A"}, uses:{ DODGE:{base:8,scale:"B"}, BLOCK:{base:8,scale:"B"}, ATK:{base:15,scale:"A"}, HATK:{base:20,scale:"B"} }, int:{base:4,scale:"C"} },
+    BERSERK:  { label:"Berserk",  hp:{base:120,scale:"S"}, uses:{ DODGE:{base:5,scale:"C"}, BLOCK:{base:10,scale:"B"}, ATK:{base:15,scale:"B"},  HATK:{base:25,scale:"A"} }, int:{base:3,scale:"C"} },
+    ASSASSIN: { label:"Assasine", hp:{base:120,scale:"B"}, uses:{ DODGE:{base:15,scale:"A"},BLOCK:{base:5,scale:"C"},  ATK:{base:25,scale:"A"}, HATK:{base:15,scale:"C"}  }, int:{base:4,scale:"C"} },
+    MAGE:     { label:"Mage",     hp:{base:120,scale:"B"}, uses:{ DODGE:{base:10,scale:"B"},BLOCK:{base:10,scale:"C"},  ATK:{base:10,scale:"A"},  HATK:{base:10,scale:"A"} }, int:{base:35,scale:"A"} },
+		SLIME: { label:"Slime", hp:{base:120,scale:"B"}, uses:{ DODGE:{base:5,scale:"C"},BLOCK:{base:5,scale:"C"},  ATK:{base:30,scale:"A"}, HATK:{base:0,scale:"N"}  }, int:{base:1,scale:"C"} },
+  };
+
+  // ---------------- Weapons ----------------
+  const WEAPONS = {
+    SHORT_SWORD:{ label:"Short Sword", slots:4, type:{atk:"slash",hatk:"slash"}, scale:{atk:"A",hatk:"A"}, speed:{atk:1,hatk:2} },
+    KATANA:     { label:"Katana",      slots:4, type:{atk:"slash",hatk:"slash"}, scale:{atk:"A",hatk:"B"}, speed:{atk:1,hatk:2} },
+    MACE:       { label:"Mace",        slots:3, type:{atk:"strike",hatk:"strike"}, scale:{atk:"B",hatk:"S"}, speed:{atk:1,hatk:2} },
+    MAGIC_WAND: { label:"Magic Wand",  slots:4, type:{atk:"projectile",hatk:"projectile"}, scale:{atk:"A",hatk:"S"}, speed:{atk:0,hatk:1}, wand:true },
+    SLIME_ATTACK:{ label:"Slime Attack", slots:4, type:{atk:"strike",hatk:"strike"}, scale:{atk:"N",hatk:"N"}, speed:{atk:0,hatk:1}, flatDmg:{atk:12,hatk:0} },
+
+  };
+
+
+  // ---------------- Armors ----------------
+  // Armor reduces incoming direct hit damage (base attacks + skills) by dmgType.
+  // Does NOT affect DoT (burn/poison).
+  const ARMORS = {
+    NONE:              { label:"Keine", resist:{} },
+    STARTER_GEAR:      { label:"Starter Gear (-10% Slash/Strike)", resist:{ slash:0.9, strike:0.9 } },
+    ARMOR_SLASH:       { label:"Rüstung: Slash -50%",       resist:{ slash:0.5 } },
+    ARMOR_STRIKE:      { label:"Rüstung: Strike -50%",      resist:{ strike:0.5 } },
+    ARMOR_PROJECTILE:  { label:"Rüstung: Projectile -50%",  resist:{ projectile:0.5 } },
+  };
+
+  // ---------------- Status system (Test 4) ----------------
+  // baseMaxHpStart is captured at combat start. DoT damage uses this fixed value.
+  const STATUS = {
+    POISON_TICKS: 5,
+    POISON_PCT: 0.05, // 5% base max HP
+    BURN_TICKS: 1,
+    BURN_PCT: 0.10,   // 10% base max HP
+    RESIST_MULT: 0.5  // -50% dmg
+  };
+
+  // ---------------- Items ----------------
+  const DUNGEON_ITEM_DEFS = {
+    HEALING_POTION: { id:"HEALING_POTION", label:"Healing Potion", category:"DUNGEON" },
+    ACTION_CHARGE: { id:"ACTION_CHARGE", label:"Aktion Charge", category:"DUNGEON" },
+    CURSE_POTION: { id:"CURSE_POTION", label:"Fluch Potion", category:"DUNGEON" },
+  };
+
+  // Merchant (Ebene 6) – simple fixed offers (no stock limits)
+  const MERCHANT_OFFERS = [
+    { id: "HEALING_POTION", price: 10, label: "Heal Potion" },
+    { id: "ACTION_CHARGE",  price: 10, label: "Aktion Charge" },
+  ];
+
+  // Combat items are a separate category and only usable via the "Item" button in fights.
+  const ITEMS = {
+    RESIST_POTION: { id:"RESIST_POTION", label:"Resistent Potion", category:"COMBAT", usesPerFight:30 }
+  };
+  // ---------------- Skill system ----------------
+  // In combat, success unlocks a matching skill for next round (1 use).
+  // Test 4 skills:
+  // - Fireball (projectile) unlocked on ATK_HIT, Speed 1, dmg = INT*A, applies burn(1)
+  // - Giftstachel (slash) unlocked on DODGE_SUCCESS, Speed 0, dmg = 1, applies poison(5)
+  const SKILLS = {
+
+    // --- Charge chain skills ---
+    ATTACK_CHARGE_1: {
+      id: "ATTACK_CHARGE_1",
+      label: "Attack Charge I",
+      kind: "attack",
+      dmgType: "strike",
+      execSpeed: 1,
+      trigger: "ATK_HIT",
+      dmg: (_p) => 14,
+      desc: "Trigger: ATK trifft. DMG = 14 (Speed 1).",
+    },
+    ATTACK_CHARGE_2: {
+      id: "ATTACK_CHARGE_2",
+      label: "Attack Charge II",
+      kind: "attack",
+      dmgType: "strike",
+      execSpeed: 1,
+      trigger: "ATTACK_CHARGE_1_HIT",
+      dmg: (_p) => 15,
+      desc: "Trigger: Attack Charge I trifft. DMG = 15 (Speed 1).",
+    },
+    FULL_CHARGED_HEAVY: {
+      id: "FULL_CHARGED_HEAVY",
+      label: "Full Charged Heavy Attack",
+      kind: "attack",
+      dmgType: "strike",
+      execSpeed: 2,
+      trigger: "ATTACK_CHARGE_2_HIT",
+      dmg: (p) => Math.ceil(p.maxUses.ATK * 2),
+      desc: "Trigger: Attack Charge II trifft. DMG = maxUses.ATK × SS (Speed 2).",
+    },
+
+    // --- v3 original skills ---
+    SUPER_HEAVY: {
+      id: "SUPER_HEAVY",
+      label: "Super Heavy Attack",
+      kind: "attack",
+      dmgType: "slash",
+      execSpeed: 2,
+      trigger: "HATK_HIT",
+      dmg: (p) => ceil(p.maxUses.HATK * (SCALE["S"] ?? 0)),
+      desc: "Trigger: Heavy Attack trifft. DMG = max HATK Uses × S (Speed 2).",
+    },
+    FAST_ATTACK: {
+      id: "FAST_ATTACK",
+      label: "Fast Attack",
+      kind: "attack",
+      dmgType: "slash",
+      execSpeed: 0,
+      trigger: "ATK_HIT",
+      dmg: (p) => ceil(p.maxUses.DODGE * (SCALE["A"] ?? 0)),
+      desc: "Trigger: Attack trifft. DMG = max Dodge Uses × A (Speed 0).",
+    },
+    COUNTER_ATTACK: {
+      id: "COUNTER_ATTACK",
+      label: "Counter Attack",
+      kind: "attack",
+      dmgType: "strike",
+      execSpeed: 1,
+      trigger: "BLOCK_SUCCESS",
+      dmg: (p) => ceil(p.maxUses.HATK * (SCALE["SS"] ?? 0)),
+      desc: "Trigger: Block negiert Schaden (100%). DMG = max HATK Uses × SS (Speed 1).",
+    },
+
+    // --- Test 4 status skills ---
+    FIREBALL: {
+      id: "FIREBALL",
+      label: "Fireball",
+      kind: "attack",
+      dmgType: "projectile",
+      execSpeed: 2,
+      trigger: "HATK_HIT",
+      dmg: (p) => ceil(p.int * (SCALE["A"] ?? 0)),
+      applyStatus: { burn: STATUS.BURN_TICKS },
+      desc: "Trigger: HATK trifft. DMG = INT × A (Speed 2). Apply: burn 1.",
+    },
+    GIFTSTACHEL: {
+      id: "GIFTSTACHEL",
+      label: "Giftstachel",
+      kind: "attack",
+      dmgType: "slash",
+      execSpeed: 0,
+      trigger: "DODGE_SUCCESS",
+      dmg: (_p) => 1,
+      applyStatus: { poison: STATUS.POISON_TICKS },
+      desc: "Trigger: Dodge negiert Schaden. DMG = 1 (Speed 0). Apply: gift 5.",
+    },
+  };
+  const SKILL_ORDER = ["FAST_ATTACK","ATTACK_CHARGE_1","ATTACK_CHARGE_2","FULL_CHARGED_HEAVY","SUPER_HEAVY","COUNTER_ATTACK","GIFTSTACHEL","FIREBALL"];
+  const SKILLS_BY_TRIGGER = {
+
+    ATTACK_CHARGE_1_HIT: ["ATTACK_CHARGE_2"],
+    ATTACK_CHARGE_2_HIT: ["FULL_CHARGED_HEAVY"],
+
+    ATK_HIT: ["ATTACK_CHARGE_1","FAST_ATTACK"],
+    HATK_HIT: ["SUPER_HEAVY","FIREBALL"],
+    BLOCK_SUCCESS: ["COUNTER_ATTACK"],
+    DODGE_SUCCESS: ["GIFTSTACHEL"],
+  };
+
+  // ---------------- State ----------------
+  const mkPlayer = (name) => ({
+    name,
+    classId:null, classLabel:"—",
+    // Equipped (instance-based)
+    equippedWeaponUid:null,
+    equippedArmorUid:null,
+    // Derived (for existing combat code)
+    weaponId:null, weaponLabel:"—",
+    armorId:"NONE", armorLabel:"Keine", armor:{ resist:{} },
+    // Ownership (variant 2)
+    ownedWeapons: [], // [{uid,id}]
+    ownedArmors: [],  // [{uid,id}]
+
+    level:1,
+    hp:100, maxHp:100,
+    baseMaxHpStart:100, // captured when fight starts
+    int:0,
+    uses:{ATK:0,HATK:0,DODGE:0,BLOCK:0},
+    maxUses:{ATK:0,HATK:0,DODGE:0,BLOCK:0},
+    weapon:{slots:0, dmgType:"—"},
+    // Skills (Option A: Skills are items; sockets are stored on weapon instances)
+    skillItems: {},          // { [skillItemUid]: {uid, skillId} }
+    skillInv: [],            // [skillItemUid, ...] (backpack)
+    equippedSkills: [],      // derived from equipped weapon sockets (skill ids)
+    activeSkills: [],        // [{id,uses:1}] in-combat available
+    pendingSkill: null,     // skill id to be granted next round
+    // Items
+    items: { RESIST_POTION: ITEMS.RESIST_POTION.usesPerFight },
+    itemUsedThisRound: false,
+    itemPick: null, // e.g. "RESIST_POTION"
+    // Statuses
+    status: { resistant:false, poison:0, burn:0 },
+    temp:{ dodgeActiveS2:false, blockActiveS1:false },
+    // NPC AI (only used when playmode=PVE and this player is NPC)
+    ai: { isNpc:false, aiInt:5, stance:"NEUTRAL" },
+  });
+
+
+  function ensureAI(p){
+    if (!p.ai) p.ai = { isNpc:false, aiInt:5, stance:"NEUTRAL" };
+    if (typeof p.ai.isNpc !== "boolean") p.ai.isNpc = false;
+    if (!Number.isFinite(p.ai.aiInt)) p.ai.aiInt = 5;
+    if (!p.ai.stance) p.ai.stance = "NEUTRAL";
+    return p.ai;
+  }
+
+  const state = {
+    playmode: "PVP", // PVP | PVE | NVN
+    simRuns: 100,
+    simResults: null,
+    uidSeq: 0,
+    players: [mkPlayer("Spieler 1"), mkPlayer("Spieler 2")],
+    round: 1,
+    phase: "CLASS_P1", // CLASS_P1/CLASS_P2/WEAPON_P1/WEAPON_P2/SKILLS_P1/SKILLS_P2/P1_PICK/P2_PICK/RESOLVE
+    picks: [null, null],
+    ended: false,
+  };
+
+  const resetTemp = (p) => { p.temp.dodgeActiveS2=false; p.temp.blockActiveS1=false; };
+  const clearCombatSkills = (p) => { p.activeSkills=[]; p.pendingSkill=null; };
+  const clearRoundItem = (p) => { p.itemUsedThisRound=false; p.itemPick=null; };
+
+  const tempText = (p) => {
+    const a = [];
+    if (p.temp.blockActiveS1) a.push("Block aktiv (S1)");
+    if (p.temp.dodgeActiveS2) a.push("Dodge aktiv (S2)");
+    return a.length ? `Temporär: ${a.join(" • ")}` : "Temporär: —";
+  };
+
+  const statusText = (p) => {
+    const parts = [];
+    if (p.status.resistant) parts.push("resistent (aktiv)");
+    if (p.status.poison > 0) parts.push(`gift ${p.status.poison}`);
+    if (p.status.burn > 0) parts.push(`burn ${p.status.burn}`);
+    return `Status: ${parts.length ? parts.join(" • ") : "—"}`;
+  };
+
+  const usesText = (p) => {
+    const u=p.uses, mu=p.maxUses;
+    const l=(id)=>`${id}: <code>${u[id]}</code>/<code>${mu[id]}</code>`;
+    return `Aufladungen: ${l("ATK")} • ${l("HATK")} • ${l("DODGE")} • ${l("BLOCK")}`;
+  };
+
+  const skillsText = (p) => {
+    const slots = p.weapon.slots || 0;
+    const eqIds = getSocketedSkillIds(p);
+    const eq = eqIds.map(id => SKILLS[id]?.label ?? id);
+    const act = p.activeSkills.map(s => `${SKILLS[s.id]?.label ?? s.id} (<code>${s.uses}</code>)`);
+    const pend = p.pendingSkill ? (SKILLS[p.pendingSkill]?.label ?? p.pendingSkill) : "—";
+    return `Skills (Slots ${slots}): Ausgerüstet: ${eq.length ? eq.join(", ") : "—"} • Aktiv: ${act.length ? act.join(", ") : "—"} • Nächste Runde: ${pend}`;
+  };
+
+  const kpis = (p) => {
+    const atk = getAction(p, "ATK");
+    const hatk = getAction(p, "HATK");
+    return [
+      {l:"ATK", v:`${atk.dmg} (${atk.dmgType}) @S${atk.execSpeed}`},
+      {l:"HATK", v:`${hatk.dmg} (${hatk.dmgType}) @S${hatk.execSpeed}`},
+      {l:"Slots", v:`${p.weapon.slots}`},
+      {l:"INT", v:`${p.int}`},
+    ];
+  };
+
+  const pCurrent = () => (state.phase === "P2_PICK" ? state.players[1] : state.players[0]);
+
+  // ---------------- Actions (base + skills) ----------------
+  function getAction(p, id){
+    // Skill action?
+    if (SKILLS[id]) {
+      const sk = SKILLS[id];
+      return {
+        id: sk.id,
+        name: sk.label,
+        kind: sk.kind,
+        execSpeed: sk.execSpeed,
+        dmgType: sk.dmgType,
+        dmg: sk.dmg(p),
+        applyStatus: sk.applyStatus || null,
+        isSkill: true
+      };
+    }
+
+    // Base actions
+    const w = WEAPONS[p.weaponId] || WEAPONS.SHORT_SWORD;
+
+    if (id === "DODGE") return { id:"DODGE", name:"Ausweichen", kind:"def", activateSpeed:2 };
+    if (id === "BLOCK") return { id:"BLOCK", name:"Block", kind:"def", activateSpeed:1 };
+
+    if (id === "ATK") {
+      const execSpeed = w.speed.atk;
+      const dmgType = w.type.atk;
+      const wScale = (SCALE[w.scale.atk] ?? 0);
+      const base = (w.flatDmg?.atk != null) ? w.flatDmg.atk : (w.wand ? p.int : p.maxUses.ATK);
+      const dmg = ceil(base + (p.level * wScale));
+      return { id:"ATK", name:"Angriff", kind:"attack", execSpeed, dmg, dmgType };
+    }
+    if (id === "HATK") {
+      const execSpeed = w.speed.hatk;
+      const dmgType = w.type.hatk;
+      const wScale = (SCALE[w.scale.hatk] ?? 0);
+      const base = (w.flatDmg?.hatk != null) ? w.flatDmg.hatk : (w.wand ? p.int : p.maxUses.HATK);
+      const dmg = ceil(base + (p.level * wScale));
+      return { id:"HATK", name:"Schwerer Angriff", kind:"attack", execSpeed, dmg, dmgType };
+    }
+    return { id, name:id, kind:"other" };
+  }
+
+  // ---------------- Render ----------------
+  function renderSkillButtons(){
+    const wrap = document.getElementById("skillActionsWrap");
+    const cont = document.getElementById("skillActions");
+    cont.innerHTML = "";
+
+    if (state.ended || state.phase === "RESOLVE" || state.phase.startsWith("CLASS") || state.phase.startsWith("WEAPON") || state.phase.startsWith("SKILLS")) {
+      wrap.style.display = "none";
+      return;
+    }
+
+    const cur = pCurrent();
+    const active = cur.activeSkills.filter(s => s.uses > 0);
+
+    if (!active.length) {
+      wrap.style.display = "none";
+      return;
+    }
+
+    wrap.style.display = "block";
+
+    // stable ordering
+    const byId = new Map(active.map(s => [s.id, s]));
+    for (const id of SKILL_ORDER) {
+      if (!byId.has(id)) continue;
+      const s = byId.get(id);
+
+      const btn = document.createElement("button");
+      btn.textContent = `${SKILLS[id].label} (${s.uses})`;
+      btn.onclick = () => pickSkill(id);
+      cont.appendChild(btn);
+    }
+
+    // any other skills not in order
+    for (const s of active) {
+      if (SKILL_ORDER.includes(s.id)) continue;
+      const btn = document.createElement("button");
+      btn.textContent = `${SKILLS[s.id]?.label ?? s.id} (${s.uses})`;
+      btn.onclick = () => pickSkill(s.id);
+      cont.appendChild(btn);
+    }
+  }
+
+  function renderItemsUI(){
+    const btn = document.getElementById("itemBtn");
+    const sel = document.getElementById("itemSelect");
+    const info = document.getElementById("itemInfo");
+
+    const inPick = (state.phase === "P1_PICK" || state.phase === "P2_PICK") && !state.ended;
+    if (!inPick) {
+      btn.disabled = true;
+      sel.style.display = "none";
+      info.textContent = "";
+      return;
+    }
+
+    const cur = pCurrent();
+    const left = cur.items.RESIST_POTION ?? 0;
+
+    info.textContent = `Kampf-Items: Resistent Potion <${left}/30> • Item + Aktion in derselben Runde möglich.`;
+
+    btn.disabled = cur.itemUsedThisRound || left <= 0;
+
+    // keep select hidden unless toggled
+  }
+
+  function render(){
+const [p1,p2] = state.players;
+
+// keep legacy equippedSkills in sync with weapon sockets (skill-items)
+syncEquippedSkillsFromWeapon(p1);
+syncEquippedSkillsFromWeapon(p2);
+
+// ---------------- Dungeon overlay handling ----------------
+// In Dungeon mode, we never use the normal combat buttons. Instead we show the dedicated
+// full-screen Dungeon UIs (Fight/Loot/LevelUp/Inventory).
+if (state.playmode === "DUNGEON") {
+  const inSetup = state.phase.startsWith("CLASS") || state.phase.startsWith("WEAPON") || state.phase.startsWith("SKILLS");
+
+  // If setup is finished but the dungeon isn't active yet, start it.
+  if (!inSetup && !(state.dungeon && state.dungeon.active)) {
+    startDungeon();
+    return;
+  }
+
+  // If dungeon is active, hide classic panels and only show dungeon UIs.
+  if (state.dungeon && state.dungeon.active) {
+    // keep top bars updated
+    document.getElementById("p1Text").textContent = `HP: ${p1.hp}/${p1.maxHp}`;
+    document.getElementById("p2Text").textContent = `HP: ${p2.hp}/${p2.maxHp}`;
+    document.getElementById("p1Fill").style.width = `${clamp((p1.hp/p1.maxHp)*100,0,100)}%`;
+    document.getElementById("p2Fill").style.width = `${clamp((p2.hp/p2.maxHp)*100,0,100)}%`;
+
+    document.getElementById("setupPanel").style.display = "none";
+    document.getElementById("fightPanel").style.display = "none";
+
+    setDungeonUI(state.dungeon.ui || "FIGHT");
+    renderDungeonInventory();
+    return;
+  }
+}
+
+
+
+
+    document.getElementById("p1Text").textContent = `HP: ${p1.hp}/${p1.maxHp}`;
+    document.getElementById("p2Text").textContent = `HP: ${p2.hp}/${p2.maxHp}`;
+    document.getElementById("p1Fill").style.width = `${clamp((p1.hp/p1.maxHp)*100,0,100)}%`;
+    document.getElementById("p2Fill").style.width = `${clamp((p2.hp/p2.maxHp)*100,0,100)}%`;
+
+    document.getElementById("p1Meta").textContent = `Klasse: ${p1.classLabel} (Lv ${p1.level}) • Waffe: ${p1.weaponLabel} • Rüstung: ${p1.armorLabel ?? "—"}`;
+    document.getElementById("p2Meta").textContent = `Klasse: ${p2.classLabel} (Lv ${p2.level}) • Waffe: ${p2.weaponLabel} • Rüstung: ${p2.armorLabel ?? "—"}${(state.playmode==="PVE" && p2.ai?.isNpc) ? " • NPC" : ""}`;
+
+    document.getElementById("p1UsesText").innerHTML = usesText(p1);
+    document.getElementById("p2UsesText").innerHTML = usesText(p2);
+    document.getElementById("p1SkillsText").innerHTML = skillsText(p1);
+    document.getElementById("p2SkillsText").innerHTML = skillsText(p2);
+
+    document.getElementById("p1Status").textContent = statusText(p1);
+    document.getElementById("p2Status").textContent = statusText(p2);
+
+    document.getElementById("p1Temp").textContent = tempText(p1);
+    document.getElementById("p2Temp").textContent = tempText(p2);
+
+    const k1 = document.getElementById("p1Kpi"); k1.innerHTML="";
+    for (const it of kpis(p1)) { const s=document.createElement("span"); s.className="badge"; s.textContent=`${it.l}: ${it.v}`; k1.appendChild(s); }
+    const k2 = document.getElementById("p2Kpi"); k2.innerHTML="";
+    for (const it of kpis(p2)) { const s=document.createElement("span"); s.className="badge"; s.textContent=`${it.l}: ${it.v}`; k2.appendChild(s); }
+
+    const p1PickEl = document.getElementById("p1Pick");
+    const p2PickEl = document.getElementById("p2Pick");
+    p1PickEl.style.display = state.picks[0] ? "inline-block" : "none";
+    p2PickEl.style.display = state.picks[1] ? "inline-block" : "none";
+    p1PickEl.textContent = state.picks[0] ? "gewählt" : "";
+    p2PickEl.textContent = state.picks[1] ? "gewählt" : "";
+
+    const phaseText = document.getElementById("phaseText");
+    if (state.ended) phaseText.textContent = "Spiel beendet";
+    else if (state.phase === "P1_PICK") phaseText.textContent = `Runde ${state.round}: Auswahl (Spieler 1)`;
+    else if (state.phase === "P2_PICK") phaseText.textContent = (state.playmode==="PVE" && state.players[1].ai?.isNpc) ? `Runde ${state.round}: NPC wählt...` : `Runde ${state.round}: Auswahl (Spieler 2)`;
+    else if (state.phase === "RESOLVE") phaseText.textContent = `Runde ${state.round}: Auflösung...`;
+    else phaseText.textContent = "Setup...";
+
+    // Enable/disable base actions
+    const disabled = state.ended || state.phase === "RESOLVE" || state.phase.startsWith("CLASS") || state.phase.startsWith("WEAPON") || state.phase.startsWith("SKILLS");
+    const cur = pCurrent();
+    document.getElementById("bATK").disabled   = disabled || cur.uses.ATK<=0;
+    document.getElementById("bHATK").disabled  = disabled || cur.uses.HATK<=0;
+    document.getElementById("bDODGE").disabled = disabled || cur.uses.DODGE<=0;
+    document.getElementById("bBLOCK").disabled = disabled || cur.uses.BLOCK<=0;
+
+    // Setup panel switching
+    const setupPanel = document.getElementById("setupPanel");
+    const fightPanel = document.getElementById("fightPanel");
+    const weaponField = document.getElementById("weaponField");
+    const skillsField = document.getElementById("skillsField");
+    const setupPhaseText = document.getElementById("setupPhaseText");
+    const confirmBtn = document.getElementById("confirmSetup");
+
+    const modeSelect = document.getElementById("modeSelect");
+    const modeGrid = document.getElementById("modeGrid");
+    const npcAiGrid = document.getElementById("npcAiGrid");
+    const npcHintField = document.getElementById("npcHintField");
+
+    const inSetup = state.phase.startsWith("CLASS") || state.phase.startsWith("WEAPON") || state.phase.startsWith("SKILLS");
+    if (modeGrid) modeGrid.style.display = inSetup ? "grid" : "none";
+
+    const isPVE = ((modeSelect ? modeSelect.value === "PVE" : false) || (state.playmode === "PVE"));
+    const isNVN = ((modeSelect ? modeSelect.value === "NVN" : false) || (state.playmode === "NVN"));
+    const isDUNGEON = ((modeSelect ? modeSelect.value === "DUNGEON" : false) || (state.playmode === "DUNGEON"));
+    if (npcHintField) npcHintField.style.display = isPVE ? "block" : "none";
+
+    const runsField = document.getElementById("runsField");
+    if (runsField) runsField.style.display = isNVN ? "block" : "none";
+
+    const showNpcAi = ((state.playmode === "PVE") && state.phase.endsWith("_P2") && inSetup)
+      || ((state.playmode === "NVN") && (state.phase === "CLASS_P1" || state.phase === "CLASS_P2") && inSetup);
+    if (npcAiGrid) npcAiGrid.style.display = showNpcAi ? "grid" : "none";
+
+    if (modeSelect) modeSelect.disabled = (state.phase !== "CLASS_P1");
+
+    if (state.phase.startsWith("CLASS") || state.phase.startsWith("WEAPON") || state.phase.startsWith("SKILLS")){
+      setupPanel.style.display = "block";
+      fightPanel.style.display = "none";
+
+      weaponField.style.display = state.phase.startsWith("WEAPON") ? "block" : "none";
+      skillsField.style.display = state.phase.startsWith("SKILLS") ? "block" : "none";
+
+      if (state.phase === "CLASS_P1") setupPhaseText.textContent = "Setup: Spieler 1 – Klasse";
+      else if (state.phase === "CLASS_P2") setupPhaseText.textContent = "Setup: Spieler 2 – Klasse";
+      else if (state.phase === "WEAPON_P1") setupPhaseText.textContent = "Setup: Spieler 1 – Waffe & Rüstung";
+      else if (state.phase === "WEAPON_P2") setupPhaseText.textContent = "Setup: Spieler 2 – Waffe & Rüstung";
+      else if (state.phase === "SKILLS_P1") setupPhaseText.textContent = "Setup: Spieler 1 – Skills (Slots)";
+      else if (state.phase === "SKILLS_P2") setupPhaseText.textContent = "Setup: Spieler 2 – Skills (Slots)";
+
+      confirmBtn.textContent = state.phase.startsWith("CLASS") ? "Klasse bestätigen" : (state.phase.startsWith("WEAPON") ? "Waffe & Rüstung bestätigen" : "Skills bestätigen");
+    } else {
+      setupPanel.style.display = "none";
+      fightPanel.style.display = "block";
+    }
+
+    document.getElementById("rematch").style.display = state.ended ? "inline-block" : "none";
+    // Swap only for PVP
+    const swapBtn = document.getElementById("swap");
+    if (swapBtn) swapBtn.style.display = (state.playmode === "PVE") ? "none" : "inline-block";
+
+    // Skill buttons + Items UI
+    renderSkillButtons();
+    renderItemsUI();
+  }
+
+  // ---------------- Setup helpers ----------------
+  function applyClass(p, classId, level){
+    const cfg = CLASSES[classId];
+    p.classId = classId;
+    p.classLabel = cfg.label;
+    p.level = level;
+    p.maxHp = ceil(scaled(cfg.hp.base, level, cfg.hp.scale));
+    p.hp = p.maxHp;
+    p.int = ceil(scaled(cfg.int.base, level, cfg.int.scale));
+
+    for (const id of ACTION_IDS){
+      const ucfg = cfg.uses[id];
+      const maxU = ceil(scaled(ucfg.base, level, ucfg.scale));
+      p.maxUses[id] = maxU;
+      p.uses[id] = maxU;
+    }
+    resetTemp(p);
+    clearCombatSkills(p);
+    // Reset ownership + equipment (fresh setup)
+    p.ownedWeapons = [];
+    p.ownedArmors = [];
+    p.equippedWeaponUid = null;
+    p.equippedArmorUid = null;
+    p.weaponId = null; p.weaponLabel = "—"; p.weapon.slots = 0; p.weapon.dmgType = "—";
+    p.skillItems = {};
+    p.skillInv = [];
+    p.equippedSkills = [];
+
+    applyArmor(p, "NONE");
+    // Reset statuses/items for fresh setup
+    p.status = { resistant:false, poison:0, burn:0 };
+    p.items = { RESIST_POTION: ITEMS.RESIST_POTION.usesPerFight };
+    clearRoundItem(p);
+  }
+
+  // ---------------- Equipment Ownership (Variant 2) ----------------
+  function newUid(prefix){
+    state.uidSeq = (state.uidSeq || 0) + 1;
+    return `${prefix}_${state.uidSeq}`;
+  }
+
+  function ensureOwnedArrays(p){
+    if (!p.ownedWeapons) p.ownedWeapons = [];
+    if (!p.ownedArmors) p.ownedArmors = [];
+  }
+
+  function addWeaponInstance(p, weaponId){
+    ensureOwnedArrays(p);
+    const uid = newUid("W");
+    const slots = WEAPONS[weaponId]?.slots || 0;
+    p.ownedWeapons.push({ uid, id: weaponId, socketedSkillUids: Array(slots).fill(null) });
+    return uid;
+  }
+
+  function addArmorInstance(p, armorId){
+    ensureOwnedArrays(p);
+    const uid = newUid("A");
+    p.ownedArmors.push({ uid, id: armorId });
+    return uid;
+  }
+
+  function findFirstOwnedWeaponUid(p, weaponId){
+    ensureOwnedArrays(p);
+    const it = p.ownedWeapons.find(w => w.id === weaponId);
+    return it ? it.uid : null;
+  }
+
+  function findFirstOwnedArmorUid(p, armorId){
+    ensureOwnedArrays(p);
+    const it = p.ownedArmors.find(a => a.id === armorId);
+    return it ? it.uid : null;
+  }
+
+  function ensureOwnedWeapon(p, weaponId){
+    let uid = findFirstOwnedWeaponUid(p, weaponId);
+    if (!uid) uid = addWeaponInstance(p, weaponId);
+    return uid;
+  }
+
+  function ensureOwnedArmor(p, armorId){
+    let uid = findFirstOwnedArmorUid(p, armorId);
+    if (!uid) uid = addArmorInstance(p, armorId);
+    return uid;
+  }
+
+  // ---------------- Skill Persistence (Variant 2) ----------------
+  // Persist skill loadouts per weapon *instance* (weaponUid).
+  function ensureSkillInventory(p){
+    if (!p.skillItems) p.skillItems = {};
+    if (!p.skillInv) p.skillInv = [];
+  }
+
+  function ensureWeaponSockets(inst, weaponDef){
+    const slots = weaponDef?.slots || 0;
+    if (!inst.socketedSkillUids) inst.socketedSkillUids = [];
+    // normalize length to slots
+    if (inst.socketedSkillUids.length < slots){
+      while (inst.socketedSkillUids.length < slots) inst.socketedSkillUids.push(null);
+    } else if (inst.socketedSkillUids.length > slots){
+      inst.socketedSkillUids = inst.socketedSkillUids.slice(0, slots);
+    }
+  }
+
+  function createSkillItem(p, skillId){
+    ensureSkillInventory(p);
+    const uid = newUid("skit");
+    p.skillItems[uid] = { uid, skillId };
+    p.skillInv.push(uid);
+    return uid;
+  }
+
+  function getEquippedWeaponInst(p){
+    ensureOwnedArrays(p);
+    return p.ownedWeapons.find(w => w.uid === p.equippedWeaponUid) || null;
+  }
+
+  function syncEquippedSkillsFromWeapon(p){
+    ensureSkillInventory(p);
+    const inst = getEquippedWeaponInst(p);
+    if (!inst){ p.equippedSkills = []; return; }
+    const wDef = WEAPONS[inst.id];
+    ensureWeaponSockets(inst, wDef);
+    const uids = inst.socketedSkillUids.filter(Boolean);
+    const ids = uids.map(uid => p.skillItems[uid]?.skillId).filter(id => !!id);
+    p.equippedSkills = ids.slice(0, wDef?.slots || 0);
+  }
+
+  function socketSkillItemToWeapon(p, skillItemUid){
+    ensureSkillInventory(p);
+    const inst = getEquippedWeaponInst(p);
+    if (!inst) return false;
+    const wDef = WEAPONS[inst.id];
+    if (!wDef) return false;
+    ensureWeaponSockets(inst, wDef);
+
+    const it = p.skillItems[skillItemUid];
+    if (!it) return false;
+    const sk = SKILLS[it.skillId];
+    if (!sk) return false;
+
+    // must match weapon dmgType
+    const dmgType = wDef.type?.atk;
+    if (sk.dmgType !== dmgType) return false;
+
+    // must be in inventory
+    const invIdx = p.skillInv.indexOf(skillItemUid);
+    if (invIdx === -1) return false;
+
+    // find first empty socket
+    const slotIdx = inst.socketedSkillUids.findIndex(x => !x);
+    if (slotIdx === -1) return false;
+
+    inst.socketedSkillUids[slotIdx] = skillItemUid;
+    p.skillInv.splice(invIdx, 1);
+
+    syncEquippedSkillsFromWeapon(p);
+    clearCombatSkills(p);
+    return true;
+  }
+
+  function unsocketSkillItemFromWeapon(p, slotIdx){
+    ensureSkillInventory(p);
+    const inst = getEquippedWeaponInst(p);
+    if (!inst) return false;
+    const wDef = WEAPONS[inst.id];
+    if (!wDef) return false;
+    ensureWeaponSockets(inst, wDef);
+
+    const uid = inst.socketedSkillUids[slotIdx];
+    if (!uid) return false;
+
+    inst.socketedSkillUids[slotIdx] = null;
+    p.skillInv.push(uid);
+
+    syncEquippedSkillsFromWeapon(p);
+    clearCombatSkills(p);
+    return true;
+  }
+
+  function equipWeaponByUid(p, weaponUid){
+    ensureOwnedArrays(p);
+    ensureSkillInventory(p);
+
+    const canEdit = canEditWeaponSkillsNow();
+
+    const inst = p.ownedWeapons.find(w => w.uid === weaponUid);
+    if (!inst) return;
+
+    p.equippedWeaponUid = weaponUid;
+
+    // derive legacy fields used by combat code
+    const w = WEAPONS[inst.id];
+    p.weaponId = inst.id;
+    p.weaponLabel = w.label;
+    p.weapon.slots = w.slots;
+    p.weapon.dmgType = w.type.atk;
+
+    // sockets live on the weapon instance
+    ensureWeaponSockets(inst, w);
+    syncEquippedSkillsFromWeapon(p);
+
+    clearCombatSkills(p);
+  }
+
+  function equipArmorByUid(p, armorUid){
+    ensureOwnedArrays(p);
+    const inst = p.ownedArmors.find(a => a.uid === armorUid);
+    if (!inst) return;
+
+    p.equippedArmorUid = armorUid;
+
+    const a = ARMORS[inst.id] || ARMORS.NONE;
+    p.armorId = inst.id;
+    p.armorLabel = a.label;
+    p.armor = { resist: { ...(a.resist || {}) } };
+
+  }
+
+
+  // Drop / discard equipment to free inventory space (Dungeon)
+  function dropWeaponByUid(p, weaponUid){
+    ensureOwnedArrays(p);
+    ensureSkillInventory(p);
+    const idx = (p.ownedWeapons || []).findIndex(w => w.uid === weaponUid);
+    if (idx < 0) return;
+
+    const inst = p.ownedWeapons[idx];
+
+    // If weapon had socketed skills, return them to skill inventory
+    if (inst && inst.socketedSkillUids && inst.socketedSkillUids.length){
+      for (const suid of inst.socketedSkillUids){
+        if (suid) p.skillInv.push(suid);
+      }
+    }
+
+    // Remove weapon
+    p.ownedWeapons.splice(idx, 1);
+
+    // If it was equipped, equip first available weapon (or re-apply standard loadout)
+    if (p.equippedWeaponUid === weaponUid){
+      p.equippedWeaponUid = (p.ownedWeapons[0] && p.ownedWeapons[0].uid) ? p.ownedWeapons[0].uid : null;
+      if (!p.equippedWeaponUid){
+        applyStandardDungeonLoadout(p);
+      } else {
+        equipWeaponByUid(p, p.equippedWeaponUid);
+      }
+    }
+  }
+
+  function dropArmorByUid(p, armorUid){
+    ensureOwnedArrays(p);
+    const idx = (p.ownedArmors || []).findIndex(a => a.uid === armorUid);
+    if (idx < 0) return;
+
+    p.ownedArmors.splice(idx, 1);
+
+    if (p.equippedArmorUid === armorUid){
+      p.equippedArmorUid = (p.ownedArmors[0] && p.ownedArmors[0].uid) ? p.ownedArmors[0].uid : null;
+      if (!p.equippedArmorUid){
+        applyStandardDungeonLoadout(p);
+      } else {
+        equipArmorByUid(p, p.equippedArmorUid);
+      }
+    }
+  }
+
+  // Used by Setup UI (select by ID, equip owned instance)
+  function applyWeapon(p, weaponId){
+    const uid = ensureOwnedWeapon(p, weaponId);
+    equipWeaponByUid(p, uid);
+  }
+
+  function applyArmor(p, armorId){
+    const uid = ensureOwnedArmor(p, armorId);
+    equipArmorByUid(p, uid);
+  }
+
+
+  function applyArmorLegacy(p, armorId){
+    const a = ARMORS[armorId] || ARMORS.NONE;
+    p.armorId = armorId;
+    p.armorLabel = a.label;
+    p.armor = { resist: { ...(a.resist || {}) } };
+  }
+
+
+
+  function buildSkillsUIForPlayer(p){
+    const list = document.getElementById("skillsList");
+    const hint = document.getElementById("skillsLimitHint");
+    list.innerHTML = "";
+
+    ensureOwnedArrays(p);
+    ensureSkillInventory(p);
+
+    const inst = getEquippedWeaponInst(p);
+    const wDef = inst ? WEAPONS[inst.id] : null;
+    const slots = wDef?.slots || 0;
+    const dmgType = wDef?.type?.atk || "—";
+    if (inst && wDef) ensureWeaponSockets(inst, wDef);
+
+    const canEdit = canEditWeaponSkillsNow();
+
+    if (hint) hint.textContent = `Waffentyp: ${dmgType} • Slots: ${slots}` + (canEdit ? " • Bearbeiten: AN" : " • Bearbeiten: nur beim Wandering Merchant (Ebene 6)");
+
+    if (!inst || !wDef || slots <= 0){
+      const div = document.createElement("div");
+      div.className = "small muted";
+      div.textContent = "Keine Waffe mit Skill-Slots ausgerüstet.";
+      list.appendChild(div);
+      p.equippedSkills = [];
+      return;
+    }
+
+    // --- helpers ---
+    const rerender = () => { syncEquippedSkillsFromWeapon(p); buildSkillsUIForPlayer(p); };
+
+    const firstEmptySlot = () => {
+      for (let i=0;i<slots;i++) if (!inst.socketedSkillUids[i]) return i;
+      return -1;
+    };
+
+    const removeFromInv = (uid) => {
+      const ix = p.skillInv.indexOf(uid);
+      if (ix >= 0) p.skillInv.splice(ix,1);
+    };
+
+    const addToInv = (uid) => {
+      if (!p.skillInv.includes(uid)) p.skillInv.push(uid);
+    };
+
+    const socketUid = (uid) => {
+      const skillId = p.skillItems[uid]?.skillId;
+      if (!skillId) return;
+      const sk = SKILLS[skillId];
+      if (!sk || sk.dmgType !== dmgType) return;
+      const slot = firstEmptySlot();
+      if (slot < 0) return;
+      removeFromInv(uid);
+      inst.socketedSkillUids[slot] = uid;
+    };
+
+    const unsocketAt = (slotIdx) => {
+      const uid = inst.socketedSkillUids[slotIdx];
+      if (!uid) return;
+      inst.socketedSkillUids[slotIdx] = null;
+      addToInv(uid);
+    };
+
+    const createAndSocket = (skillId) => {
+      const sk = SKILLS[skillId];
+      if (!sk || sk.dmgType !== dmgType) return;
+      const slot = firstEmptySlot();
+      if (slot < 0) return;
+      const uid = createSkillItem(p, skillId); // creates in inv
+      socketUid(uid);
+    };
+
+    // --- Section: weapon sockets ---
+    const h1 = document.createElement("div");
+    h1.className = "small muted";
+    h1.style.margin = "6px 0 4px";
+    h1.textContent = "In der Waffe:";
+    list.appendChild(h1);
+
+    for (let i=0;i<slots;i++){
+      const uid = inst.socketedSkillUids[i];
+      const skillId = uid ? (p.skillItems[uid]?.skillId || null) : null;
+      const sk = skillId ? SKILLS[skillId] : null;
+
+      const row = document.createElement("div");
+      row.className = "row";
+      row.style.justifyContent = "space-between";
+      row.style.alignItems = "center";
+      row.style.gap = "8px";
+
+      const left = document.createElement("div");
+      left.style.flex = "1";
+      left.innerHTML = sk
+        ? `<div><b>${sk.label}</b></div><div class="small muted">${sk.desc}</div>`
+        : `<div class="small muted">(leer)</div>`;
+
+      const btn = document.createElement("button");
+      btn.className = "btn";
+      btn.textContent = uid ? (canEdit ? "Entfernen" : "Gesperrt") : "—";
+      btn.disabled = !uid || !canEdit;
+      btn.onclick = () => { unsocketAt(i); rerender(); };
+
+      row.appendChild(left);
+      row.appendChild(btn);
+      list.appendChild(row);
+    }
+
+    // --- Section: skill inventory (matching type) ---
+    const invUids = p.skillInv.filter(uid => {
+      const sid = p.skillItems[uid]?.skillId;
+      return sid && SKILLS[sid]?.dmgType === dmgType;
+    });
+
+    const h2 = document.createElement("div");
+    h2.className = "small muted";
+    h2.style.margin = "10px 0 4px";
+    h2.textContent = "Skills im Inventar:";
+    list.appendChild(h2);
+
+    if (!invUids.length){
+      const div = document.createElement("div");
+      div.className = "small muted";
+      div.textContent = "Keine passenden Skill-Items im Inventar.";
+      list.appendChild(div);
+    } else {
+      for (const uid of invUids){
+        const sid = p.skillItems[uid]?.skillId;
+        const sk = SKILLS[sid];
+        const row = document.createElement("div");
+        row.className = "row";
+        row.style.justifyContent = "space-between";
+        row.style.alignItems = "center";
+        row.style.gap = "8px";
+
+        const left = document.createElement("div");
+        left.style.flex = "1";
+        left.innerHTML = `<div><b>${sk.label}</b></div><div class="small muted">${sk.desc}</div>`;
+
+        const btn = document.createElement("button");
+        btn.className = "btn";
+        btn.textContent = "Sockeln";
+        btn.disabled = (firstEmptySlot() < 0);
+        btn.onclick = () => { socketUid(uid); rerender(); };
+
+        row.appendChild(left);
+        row.appendChild(btn);
+        list.appendChild(row);
+      }
+    }
+
+    // --- Section: available skills (create new items) ---
+    const h3 = document.createElement("div");
+    h3.className = "small muted";
+    h3.style.margin = "10px 0 4px";
+    h3.textContent = "Verfügbare Skills (neues Item erstellen):";
+    list.appendChild(h3);
+
+    const skillIds = Object.keys(SKILLS).filter(id => SKILLS[id].dmgType === dmgType);
+    if (!skillIds.length){
+      const div = document.createElement("div");
+      div.className = "small muted";
+      div.textContent = "Keine Skills für diesen Waffentyp.";
+      list.appendChild(div);
+    } else {
+      for (const skillId of skillIds){
+        const sk = SKILLS[skillId];
+        const row = document.createElement("div");
+        row.className = "row";
+        row.style.justifyContent = "space-between";
+        row.style.alignItems = "center";
+        row.style.gap = "8px";
+
+        const left = document.createElement("div");
+        left.style.flex = "1";
+        left.innerHTML = `<div><b>${sk.label}</b></div><div class="small muted">${sk.desc}</div>`;
+
+        const btn = document.createElement("button");
+        btn.className = "btn";
+        btn.textContent = "Hinzufügen + Sockeln";
+        btn.disabled = (firstEmptySlot() < 0);
+        btn.onclick = () => { createAndSocket(skillId); rerender(); };
+
+        row.appendChild(left);
+        row.appendChild(btn);
+        list.appendChild(row);
+      }
+    }
+
+    // Keep derived list in sync for combat code
+    syncEquippedSkillsFromWeapon(p);
+  }
+
+  function readSelectedSkillsFromUI(p){
+    // Setup UI is now socket/item-based (Option A). The weapon instance already
+    // contains the socketed skill-items. The old checkbox-based reader would
+    // wipe sockets and cause skills to disappear at combat start.
+    syncEquippedSkillsFromWeapon(p);
+  }
+
+  function setSetupDefaults(){
+    const idx = state.phase.endsWith("_P2") ? 1 : 0;
+    const p = state.players[idx];
+
+    // playmode defaults
+    const modeSel = document.getElementById("modeSelect");
+    if (modeSel) modeSel.value = state.playmode || "PVP";
+
+    const runsInput = document.getElementById("runsInput");
+    if (runsInput) runsInput.value = String(state.simRuns ?? 100);
+
+    // npc ai defaults (only meaningful for P2)
+    const aiIntInput = document.getElementById("aiIntInput");
+    const aiStanceSel = document.getElementById("aiStanceSelect");
+    if (aiIntInput) aiIntInput.value = String((p.ai?.aiInt ?? 5));
+    if (aiStanceSel) aiStanceSel.value = (p.ai?.stance ?? "NEUTRAL");
+
+    if (p.classId) document.getElementById("classSelect").value = p.classId;
+    document.getElementById("levelInput").value = p.level || 1;
+    if (p.weaponId) document.getElementById("weaponSelect").value = p.weaponId;
+    if (p.armorId) document.getElementById("armorSelect").value = p.armorId;
+
+    if (state.phase.startsWith("SKILLS")){
+      buildSkillsUIForPlayer(p);
+    }
+  }
+
+  function setupConfirm(){
+    const classId = document.getElementById("classSelect").value;
+    const level = Math.max(1, Math.min(99, parseInt(document.getElementById("levelInput").value || "1", 10)));
+    const weaponId = document.getElementById("weaponSelect").value;
+    const armorId = document.getElementById("armorSelect").value;
+
+    const modeSel = document.getElementById("modeSelect");
+    const modeVal = modeSel ? modeSel.value : (state.playmode || "PVP");
+    const runsVal = Math.max(1, Math.min(5000, parseInt((document.getElementById("runsInput")?.value || "100"), 10)));
+    const aiInt = Math.max(1, Math.min(10, parseInt((document.getElementById("aiIntInput")?.value || "5"), 10)));
+    const aiStance = document.getElementById("aiStanceSelect")?.value || "NEUTRAL";
+
+    if (state.phase === "CLASS_P1"){
+      state.playmode = modeVal;
+      state.simRuns = runsVal;
+      // Mark NPC flags
+      ensureAI(state.players[0]).isNpc = (state.playmode === "NVN");
+      ensureAI(state.players[1]).isNpc = (state.playmode === "PVE" || state.playmode === "NVN" || state.playmode === "DUNGEON");
+      applyClass(state.players[0], classId, level);
+      ensureAI(state.players[0]);
+      if (state.playmode === "NVN"){
+        state.players[0].ai.isNpc = true;
+        state.players[0].ai.aiInt = aiInt;
+        state.players[0].ai.stance = aiStance;
+      }
+      if (state.playmode === "DUNGEON"){
+        // Dungeon: only configure Player 1. Prepare Player 2 as dummy NPC (not used in simulated fight).
+        applyClass(state.players[1], "SLIME", 1);
+        applyWeapon(state.players[1], "SLIME_ATTACK");
+        applyArmor(state.players[1], "NONE");
+        ensureAI(state.players[1]);
+        state.players[1].ai.isNpc = true;
+        state.phase = "WEAPON_P1";
+        render(); setSetupDefaults(); return;
+      }
+
+      state.phase = "CLASS_P2";
+      render(); setSetupDefaults(); return;
+    }
+    if (state.phase === "CLASS_P2"){
+      applyClass(state.players[1], classId, level);
+      ensureAI(state.players[1]);
+      if (state.playmode === "PVE" || state.playmode === "NVN"){
+        state.players[1].ai.isNpc = true;
+        state.players[1].ai.aiInt = aiInt;
+        state.players[1].ai.stance = aiStance;
+      } else {
+        state.players[1].ai.isNpc = false;
+      }
+      // keep playmode; ensure NPC flag is consistent
+      state.players[1].ai.isNpc = (state.playmode === "PVE" || state.playmode === "NVN" || state.playmode === "DUNGEON");
+      state.phase = "WEAPON_P1";
+      render(); setSetupDefaults(); return;
+    }
+    if (state.phase === "WEAPON_P1"){
+      applyWeapon(state.players[0], weaponId);
+      applyArmor(state.players[0], armorId);
+      state.phase = (state.playmode === "DUNGEON") ? "SKILLS_P1" : "WEAPON_P2";
+      render(); setSetupDefaults(); return;
+    }
+    if (state.phase === "WEAPON_P2"){
+      applyWeapon(state.players[1], weaponId);
+      applyArmor(state.players[1], armorId);
+      state.phase = "SKILLS_P1";
+      render(); setSetupDefaults(); return;
+    }
+    if (state.phase === "SKILLS_P1"){
+      readSelectedSkillsFromUI(state.players[0]);
+      if (state.playmode === "DUNGEON"){
+        // Dungeon: after Player 1 skills, start the dungeon.
+        startDungeon();
+        return;
+      }
+      state.phase = "SKILLS_P2";
+      render(); setSetupDefaults(); return;
+    }
+    if (state.phase === "SKILLS_P2"){
+      readSelectedSkillsFromUI(state.players[1]);
+
+      // capture base max HP at combat start
+      for (const p of state.players){
+        p.baseMaxHpStart = p.maxHp;
+        p.status = { resistant:false, poison:0, burn:0 };
+        clearRoundItem(p);
+      }
+
+      if (state.playmode === "NVN"){
+      // start NPC vs NPC simulation
+      logEl.innerHTML = "";
+      startNpcVsNpcSimulation();
+      return;
+      }
+
+
+      if (state.playmode === "DUNGEON"){
+        // start Dungeon flow (4 Fullscreen UIs)
+        startDungeon();
+        return;
+      }
+
+      state.phase = "P1_PICK";
+      logEl.innerHTML = "";
+      log("Kampf startet!");
+      render(); return;
+    }
+  }
+
+  // ---------------- Items (picking) ----------------
+  function toggleItemSelect(){
+    const sel = document.getElementById("itemSelect");
+    sel.style.display = (sel.style.display === "none" || !sel.style.display) ? "block" : "none";
+    sel.value = "";
+  }
+
+  function useItem(itemId){
+    if (state.ended) return;
+    if (state.phase !== "P1_PICK" && state.phase !== "P2_PICK") return;
+
+    const idx = (state.phase === "P1_PICK") ? 0 : 1;
+    const p = state.players[idx];
+
+    if (p.itemUsedThisRound) return;
+
+    if (itemId === "RESIST_POTION"){
+      if ((p.items.RESIST_POTION ?? 0) <= 0) return;
+      p.items.RESIST_POTION -= 1;
+      p.itemUsedThisRound = true;
+      p.itemPick = "RESIST_POTION";
+      // Make it visible immediately (so both can reason about it during the round)
+      p.status.resistant = true;
+      log(`${p.name} nutzt Resistent Potion (Speed 0, diese Runde).`);
+      render();
+    }
+  }
+
+  // ---------------- Combat helpers ----------------
+  function activateDefenseAtSpeed(p, a, s){
+    if (a.kind !== "def") return;
+    if (a.id === "BLOCK" && s === 1){
+      p.temp.blockActiveS1 = true;
+      log(`${p.name} aktiviert Block (S1).`);
+    }
+    if (a.id === "DODGE" && s === 2){
+      p.temp.dodgeActiveS2 = true;
+      log(`${p.name} aktiviert Dodge (S2).`);
+    }
+  }
+
+  // returns {negated:boolean, hit:boolean, didDamage:boolean}
+  function applyAttack(att, def, a, s){
+    // Block: S1 -> 0 dmg
+    if (s === 1 && def.temp.blockActiveS1){
+      log(`${def.name} blockt → 0 Schaden von ${att.name}.`);
+      return { negated: (a.dmg ?? 0) > 0, hit:false, didDamage:false };
+    }
+    // Dodge: S2 -> 0 dmg
+    if (s === 2 && def.temp.dodgeActiveS2){
+      log(`${def.name} weicht aus → 0 Schaden von ${att.name}.`);
+      return { negated: (a.dmg ?? 0) > 0, hit:false, didDamage:false };
+    }
+
+    let dmg = a.dmg ?? 0;
+
+    // Armor reduces incoming direct hit damage by dmgType (does not affect DoT).
+    const armorMult = def.armor?.resist?.[a.dmgType] ?? 1;
+    if (armorMult !== 1){
+      const before = dmg;
+      dmg = floor(dmg * armorMult);
+      log(`${def.name} Rüstung reduziert (${a.dmgType}) ${before} → ${dmg}.`);
+    }
+
+    // Resistant potion stacks multiplicatively.
+    if (def.status.resistant){
+      const before = dmg;
+      dmg = floor(dmg * STATUS.RESIST_MULT);
+      log(`${def.name} Resistent reduziert ${before} → ${dmg}.`);
+    }
+
+    def.hp = Math.max(0, def.hp - dmg);
+    log(`${att.name} trifft ${def.name} mit ${a.name}${a.isSkill ? " [Skill]" : ""} (${a.dmgType}) für ${dmg}.`);
+    // Apply status effects on hit (timer reset; no stacking)
+    if (a.applyStatus){
+      if (a.applyStatus.burn){
+        def.status.burn = a.applyStatus.burn;
+        log(`${def.name} erhält Status: burn ${def.status.burn}.`);
+      }
+      if (a.applyStatus.poison){
+        def.status.poison = a.applyStatus.poison;
+        log(`${def.name} erhält Status: gift ${def.status.poison}.`);
+      }
+    }
+
+    const didDamage = dmg > 0;
+    return { negated:false, hit:true, didDamage };
+  }
+
+  function getSocketedSkillIds(p){
+    const inst = getEquippedWeaponInst(p);
+    if (!inst) return [];
+    const uids = inst.socketedSkillUids || [];
+    const out = [];
+    for (const uid of uids){
+      if (!uid) continue;
+      const it = (p.skillItems && p.skillItems[uid]) ? p.skillItems[uid] : null;
+      if (it && it.skillId) out.push(it.skillId);
+    }
+    return out;
+  }
+
+  function canGrantSkill(p, skillId){
+    if (!skillId) return false;
+    // Equipped skills are determined by the current weapon sockets (skill-items), not a separate loadout list
+    const equipped = getSocketedSkillIds(p);
+    if (!equipped.includes(skillId)) return false;
+    if (SKILLS[skillId].dmgType !== p.weapon.dmgType) return false;
+    if (p.activeSkills.length >= (p.weapon.slots || 0)) return false;
+    if (p.activeSkills.some(s => s.id === skillId)) return false;
+    if (p.pendingSkill === skillId) return false;
+    return true;
+  }
+
+  function scheduleSkillFromTrigger(p, trigger){
+    if (p.pendingSkill) return; // max 1 per round
+    const candidates = SKILLS_BY_TRIGGER[trigger] || [];
+    // DEBUG: show why skills do/don't proc (remove later)
+    const eqDbg = getSocketedSkillIds(p);
+    log(`[PROC CHECK] ${p.name}: trigger=${trigger} candidates=${candidates.join("|")||"—"} equipped=${eqDbg.join("|")||"—"}`);
+    for (const skillId of candidates){
+      if (canGrantSkill(p, skillId)){
+        p.pendingSkill = skillId;
+        log(`${p.name} schaltet Skill frei (nächste Runde): ${SKILLS[skillId].label}.`);
+        return;
+      }
+    }
+  }
+
+  function grantPendingSkillsForNextRound(){
+    for (const p of state.players){
+      if (!p.pendingSkill) continue;
+      const skillId = p.pendingSkill;
+      if (p.activeSkills.length >= (p.weapon.slots || 0)){
+        log(`${p.name}: Kein Slot frei → Skill verfällt: ${SKILLS[skillId].label}.`);
+        p.pendingSkill = null;
+        continue;
+      }
+      p.activeSkills.push({ id: skillId, uses: 1 });
+      p.pendingSkill = null;
+      log(`${p.name}: Skill verfügbar! ${SKILLS[skillId].label} (1 Use).`);
+    }
+  }
+
+  function maybeApplySkillOnHit(att, def, a, res){
+    if (!a.isSkill) return;
+    if (!res.hit) return;
+    const sk = SKILLS[a.id];
+    if (sk && typeof sk.onHit === "function"){
+      sk.onHit(att, def);
+      if (a.id === "FIREBALL") log(`${def.name} erhält Status: burn 1.`);
+      if (a.id === "GIFTSTACHEL") log(`${def.name} erhält Status: gift ${STATUS.POISON_TICKS}.`);
+    }
+  }
+
+  function resolveSpeed(s, p1, p2, a1, a2){
+    const p1Atk = a1.kind === "attack" && a1.execSpeed === s;
+    const p2Atk = a2.kind === "attack" && a2.execSpeed === s;
+
+    if (!p1Atk && !p2Atk){
+      log("Keine Angriffe in dieser Phase.");
+      return;
+    }
+
+    if (p1Atk && p2Atk){
+      log("Beide greifen im selben Speed an → beide treffen gleichzeitig.");
+      const r1 = applyAttack(p1, p2, a1, s);
+      const r2 = applyAttack(p2, p1, a2, s);
+
+      maybeApplySkillOnHit(p1, p2, a1, r1);
+      maybeApplySkillOnHit(p2, p1, a2, r2);
+
+      // offensive triggers only from BASE attacks (skills do not trigger skills)
+      if (r1.hit) scheduleSkillFromTrigger(p1, (a1.id === "ATK" ? "ATK_HIT" : (a1.id === "HATK" ? "HATK_HIT" : null)));
+      if (r2.hit) scheduleSkillFromTrigger(p2, (a2.id === "ATK" ? "ATK_HIT" : (a2.id === "HATK" ? "HATK_HIT" : null)));
+
+      // defensive triggers
+      if (r1.negated){
+        if (s === 1 && p2.temp.blockActiveS1) scheduleSkillFromTrigger(p2, "BLOCK_SUCCESS");
+        if (s === 2 && p2.temp.dodgeActiveS2) scheduleSkillFromTrigger(p2, "DODGE_SUCCESS");
+      }
+      if (r2.negated){
+        if (s === 1 && p1.temp.blockActiveS1) scheduleSkillFromTrigger(p1, "BLOCK_SUCCESS");
+        if (s === 2 && p1.temp.dodgeActiveS2) scheduleSkillFromTrigger(p1, "DODGE_SUCCESS");
+      }
+      return;
+    }
+
+    if (p1Atk){
+      const r = applyAttack(p1, p2, a1, s);
+      maybeApplySkillOnHit(p1, p2, a1, r);
+      if (r.hit) scheduleSkillFromTrigger(p1, (a1.id === "ATK" ? "ATK_HIT" : (a1.id === "HATK" ? "HATK_HIT" : null)));
+      if (r.negated && s === 1 && p2.temp.blockActiveS1) scheduleSkillFromTrigger(p2, "BLOCK_SUCCESS");
+      if (r.negated && s === 2 && p2.temp.dodgeActiveS2) scheduleSkillFromTrigger(p2, "DODGE_SUCCESS");
+    }
+    if (p2Atk){
+      const r = applyAttack(p2, p1, a2, s);
+      maybeApplySkillOnHit(p2, p1, a2, r);
+      if (r.hit) scheduleSkillFromTrigger(p2, (a2.id === "ATK" ? "ATK_HIT" : (a2.id === "HATK" ? "HATK_HIT" : null)));
+      if (r.negated && s === 1 && p1.temp.blockActiveS1) scheduleSkillFromTrigger(p1, "BLOCK_SUCCESS");
+      if (r.negated && s === 2 && p1.temp.dodgeActiveS2) scheduleSkillFromTrigger(p1, "DODGE_SUCCESS");
+    }
+  }
+
+  function resolveStatusPhase(){
+    const [p1,p2] = state.players;
+    log("-- Statusphase (Phase 3) --");
+
+    // Burn then poison (fixed order for reproducible logs)
+    for (const pair of [[p1,p2],[p2,p1]]){
+      const def = pair[0];
+      if (def.hp <= 0) continue;
+
+      if (def.status.burn > 0){
+        let dmg = floor(def.baseMaxHpStart * STATUS.BURN_PCT);
+        if (def.status.resistant) dmg = floor(dmg * STATUS.RESIST_MULT);
+        def.hp = Math.max(0, def.hp - dmg);
+        log(`${def.name} erleidet Burn (${STATUS.BURN_PCT*100}% MaxHP) für ${dmg}.`);
+        def.status.burn = Math.max(0, def.status.burn - 1);
+        render();
+        if (endCheck()) return;
+      }
+
+      if (def.status.poison > 0){
+        let dmg = floor(def.baseMaxHpStart * STATUS.POISON_PCT);
+        if (def.status.resistant) dmg = floor(dmg * STATUS.RESIST_MULT);
+        def.hp = Math.max(0, def.hp - dmg);
+        log(`${def.name} erleidet Gift (${STATUS.POISON_PCT*100}% MaxHP) für ${dmg}.`);
+        def.status.poison = Math.max(0, def.status.poison - 1);
+        render();
+        if (endCheck()) return;
+      }
+    }
+  }
+
+  function resolveRound(){
+    const p1 = state.players[0];
+    const p2 = state.players[1];
+
+    const a1 = getAction(p1, state.picks[0]);
+    const a2 = getAction(p2, state.picks[1]);
+
+    log(`=== Runde ${state.round} ===`);
+    log(`Auswahl: P1=${a1.name} | P2=${a2.name}`);
+
+    for (const s of [0,1,2]){
+      log(`-- Speed ${s} --`);
+      activateDefenseAtSpeed(p1, a1, s);
+      activateDefenseAtSpeed(p2, a2, s);
+      resolveSpeed(s, p1, p2, a1, a2);
+      render();
+      if (endCheck()) return;
+    }
+
+    // Statusphase (Phase 3)
+    resolveStatusPhase();
+    if (endCheck()) return;
+
+    log("-- Rundenende --");
+    resetTemp(p1); resetTemp(p2);
+    log("Temporäre Effekte zurückgesetzt.");
+
+    // End-of-round cleanup:
+    // - Resistant lasts only until end of status phase (this round)
+    p1.status.resistant = false;
+    p2.status.resistant = false;
+    clearRoundItem(p1);
+    clearRoundItem(p2);
+
+    // Grant skills for next round now (so they show up in the selection phase)
+    grantPendingSkillsForNextRound();
+
+    state.round += 1;
+    state.picks = [null, null];
+    state.phase = "P1_PICK";
+    render();
+  }
+
+  function endCheck(){
+    const [p1,p2] = state.players;
+    if (p1.hp <= 0 || p2.hp <= 0){
+      state.ended = true;
+      if (p1.hp<=0 && p2.hp<=0) log("Unentschieden! (Doppel-KO)");
+      else if (p1.hp<=0) log("Spieler 2 gewinnt!");
+      else log("Spieler 1 gewinnt!");
+      render();
+      return true;
+    }
+    return false;
+  }
+
+
+  // ---------------- NPC (PVE) ----------------
+  const SKILL_CHANCE = { AGGRESSIVE: 0.60, NEUTRAL: 0.40, DEFENSIVE: 0.20 };
+  const BASE_TIEBREAK = ["HATK","ATK","DODGE","BLOCK"]; // tie-break when same uses
+  const BASE_RANDOM_OTHER = 0.15; // 15%
+
+  function rng(){ return Math.random(); }
+
+  function listActiveSkillIds(p){
+    return (p.activeSkills || []).filter(s => s.uses > 0).map(s => s.id);
+  }
+
+  function bestSkillByDmg(p){
+    const ids = listActiveSkillIds(p);
+    if (!ids.length) return null;
+    let best = null;
+    let bestDmg = -1;
+    for (const id of ids){
+      const a = getAction(p, id);
+      const dmg = a.dmg ?? 0;
+      if (dmg > bestDmg){ bestDmg = dmg; best = id; }
+    }
+    return best;
+  }
+
+  function bestAttackActionId(p){
+    // best damage among skills + base ATK/HATK (only attacks)
+    let best = null;
+    let bestDmg = -1;
+
+    // skills
+    for (const id of listActiveSkillIds(p)){
+      const a = getAction(p, id);
+      const dmg = a.dmg ?? 0;
+      if (dmg > bestDmg){ bestDmg = dmg; best = id; }
+    }
+
+    // base attacks
+    if (p.uses.ATK > 0){
+      const a = getAction(p, "ATK");
+      if ((a.dmg ?? 0) > bestDmg){ bestDmg = (a.dmg ?? 0); best = "ATK"; }
+    }
+    if (p.uses.HATK > 0){
+      const a = getAction(p, "HATK");
+      if ((a.dmg ?? 0) > bestDmg){ bestDmg = (a.dmg ?? 0); best = "HATK"; }
+    }
+    return best;
+  }
+
+  function negateOptionFor(enemyAction, npc){
+    if (!enemyAction || enemyAction.kind !== "attack") return null;
+    if (enemyAction.execSpeed === 1 && npc.uses.BLOCK > 0) return "BLOCK";
+    if (enemyAction.execSpeed === 2 && npc.uses.DODGE > 0) return "DODGE";
+    return null; // Speed 0 not negatable
+  }
+
+  function pickBaseMostUses(npc){
+    const avail = BASE_TIEBREAK.filter(id => (npc.uses[id] ?? 0) > 0);
+    if (!avail.length) return null;
+
+    let best = avail[0];
+    let bestUses = npc.uses[best] ?? 0;
+
+    for (const id of avail){
+      const u = npc.uses[id] ?? 0;
+      if (u > bestUses){
+        best = id; bestUses = u;
+      } else if (u === bestUses){
+        // tie-break by BASE_TIEBREAK order (already in list), so do nothing
+      }
+    }
+
+    // 15% choose a different random base action (if possible)
+    if (avail.length >= 2 && rng() < BASE_RANDOM_OTHER){
+      const others = avail.filter(x => x !== best);
+      const pick = others[Math.floor(rng() * others.length)];
+      return { id: pick, reason: `Random(15%) override → ${pick}` , randomized:true };
+    }
+
+    return { id: best, reason: `Most uses → ${best} (${bestUses})`, randomized:false };
+  }
+
+  function npcDecideAction(p1PickId){
+    const npc = state.players[1];
+    const p1 = state.players[0];
+
+    const aiInt = Math.max(1, Math.min(10, npc.ai?.aiInt ?? 5));
+    const stance = (npc.ai?.stance ?? "NEUTRAL");
+    const readChance = aiInt / 10;
+
+    const rollRead = rng();
+    const readOk = rollRead < readChance;
+
+    log(`NPC AI: stance=${stance} • aiInt=${aiInt} (read ${(readChance*100).toFixed(0)}%) • roll=${rollRead.toFixed(2)} → ${readOk ? "READ" : "NO READ"}`);
+
+    // Read success: use priority system
+    if (readOk){
+      const enemyAction = getAction(p1, p1PickId);
+      const enemyDmg = (enemyAction.kind === "attack") ? (enemyAction.dmg ?? 0) : 0;
+
+      const bestId = bestAttackActionId(npc);
+      const bestAct = bestId ? getAction(npc, bestId) : null;
+      const bestDmg = bestAct?.dmg ?? 0;
+
+      log(`NPC READ: enemy=${enemyAction.name} ${enemyAction.kind==="attack" ? `@S${enemyAction.execSpeed}` : ""} • expectedEnemyDmg=${enemyDmg}`);
+      log(`NPC READ: bestAttack=${bestAct ? bestAct.name : "—"} dmg=${bestDmg}`);
+
+      // PRIO 1: if can match/exceed enemy damage -> best attack
+      if (bestAct && bestDmg >= enemyDmg){
+        log(`NPC PRIO1: ${bestDmg} >= ${enemyDmg} → pick ${bestAct.name}`);
+        return bestId;
+      }
+
+      // PRIO 2: negate if possible (speed 1/2)
+      const neg = negateOptionFor(enemyAction, npc);
+      if (neg){
+        log(`NPC PRIO2: cannot match → negate with ${neg} (100%)`);
+        return neg;
+      }
+
+      // PRIO 3: speed0 or no negate -> max dmg
+      if (bestId){
+        log(`NPC PRIO3: no negate possible → pick max dmg ${bestAct.name}`);
+        return bestId;
+      }
+
+      // fallback
+      const base = pickBaseMostUses(npc);
+      log(`NPC fallback: ${base?.reason ?? "no action"}`);
+      return base?.id ?? "ATK";
+    }
+
+    // Read failed: skills chance (stance-bound), else base by most uses
+    const skillIds = listActiveSkillIds(npc);
+    if (skillIds.length){
+      const sc = SKILL_CHANCE[stance] ?? 0.40;
+      const rollSkill = rng();
+      const skillOk = rollSkill < sc;
+      log(`NPC NO READ: skills available=${skillIds.length} • skillChance=${(sc*100).toFixed(0)}% • roll=${rollSkill.toFixed(2)} → ${skillOk ? "USE SKILL" : "NO SKILL"}`);
+      if (skillOk){
+        const bestSkill = bestSkillByDmg(npc);
+        if (bestSkill){
+          const a = getAction(npc, bestSkill);
+          log(`NPC SKILL: pick max dmg skill → ${a.name} dmg=${a.dmg ?? 0}`);
+          return bestSkill;
+        }
+      }
+    } else {
+      log(`NPC NO READ: no skills available`);
+    }
+
+    const basePick = pickBaseMostUses(npc);
+    if (basePick){
+      log(`NPC BASE: ${basePick.reason}`);
+      return basePick.id;
+    }
+
+    // absolute fallback
+    return (npc.uses.ATK > 0) ? "ATK" : ((npc.uses.HATK > 0) ? "HATK" : "BLOCK");
+  }
+
+  function npcSpendAndSetPick(pickId){
+    const npc = state.players[1];
+
+    if (SKILLS[pickId]){
+      const entry = npc.activeSkills.find(s => s.id === pickId);
+      if (!entry || entry.uses <= 0) return false;
+      entry.uses -= 1;
+      npc.activeSkills = npc.activeSkills.filter(s => s.uses > 0);
+      state.picks[1] = pickId;
+      log(`NPC wählt Skill: ${SKILLS[pickId].label}.`);
+      return true;
+    }
+
+    // base
+    if ((npc.uses[pickId] ?? 0) <= 0) return false;
+    npc.uses[pickId] -= 1;
+    state.picks[1] = pickId;
+    log(`NPC wählt: ${pickId}.`);
+    return true;
+  }
+
+  function maybeNpcAutoPick(){
+    if (state.playmode !== "PVE") return;
+    const npc = state.players[1];
+    if (!npc.ai?.isNpc) return;
+    if (state.phase !== "P2_PICK") return;
+    // p1 must have picked
+    const p1Pick = state.picks[0];
+    if (!p1Pick) return;
+
+    const npcPick = npcDecideAction(p1Pick);
+    const ok = npcSpendAndSetPick(npcPick);
+    if (!ok){
+      // fallback to any base
+      const base = pickBaseMostUses(npc);
+      const fb = base?.id ?? "ATK";
+      npcSpendAndSetPick(fb);
+      log(`NPC fallback-pick used: ${fb}`);
+    }
+
+    state.phase = "RESOLVE";
+    render();
+    resolveRound();
+  }
+
+  // ---------------- Picking ----------------
+  function pickBase(id){
+    if (state.ended) return;
+    if (state.phase !== "P1_PICK" && state.phase !== "P2_PICK") return;
+
+    const idx = (state.phase === "P1_PICK") ? 0 : 1;
+    const p = state.players[idx];
+
+    if (p.uses[id] <= 0){
+      log(`${p.name} kann ${id} nicht mehr benutzen (0).`);
+      render(); return;
+    }
+
+    p.uses[id] -= 1;
+    state.picks[idx] = id;
+    log(`${p.name} hat gewählt.`);
+    state.phase = (state.phase === "P1_PICK") ? "P2_PICK" : "RESOLVE";
+    render();
+    if (state.playmode === "PVE" && state.phase === "P2_PICK") { maybeNpcAutoPick(); return; }
+    if (state.phase === "RESOLVE") resolveRound();
+  }
+
+  function pickSkill(skillId){
+    if (state.ended) return;
+    if (state.phase !== "P1_PICK" && state.phase !== "P2_PICK") return;
+
+    const idx = (state.phase === "P1_PICK") ? 0 : 1;
+    const p = state.players[idx];
+
+    const entry = p.activeSkills.find(s => s.id === skillId);
+    if (!entry || entry.uses <= 0){
+      log(`${p.name} kann ${SKILLS[skillId]?.label ?? skillId} nicht benutzen (0).`);
+      render(); return;
+    }
+
+    entry.uses -= 1;
+    p.activeSkills = p.activeSkills.filter(s => s.uses > 0);
+
+    state.picks[idx] = skillId;
+    log(`${p.name} hat Skill gewählt: ${SKILLS[skillId]?.label ?? skillId}.`);
+    state.phase = (state.phase === "P1_PICK") ? "P2_PICK" : "RESOLVE";
+    render();
+    if (state.playmode === "PVE" && state.phase === "P2_PICK") { maybeNpcAutoPick(); return; }
+    if (state.phase === "RESOLVE") resolveRound();
+  }
+
+  
+  // ---------------- NPC vs NPC Simulation (NVN) ----------------
+  const SIM_HARDCAP_ROUNDS = 50;
+  const SIM_NODMG_CAP = 10;
+
+  function fmtCountPct(count, total){
+    const pct = total > 0 ? (count/total*100) : 0;
+    return `${count} (${pct.toFixed(1)}%)`;
+  }
+
+  function createSimResults(){
+    return {
+      runs: state.simRuns ?? 100,
+      wins1: 0, wins2: 0, draws: 0,
+      drawCap50: 0,
+      drawNoDmg10: 0,
+      rounds: [],
+      // usage counts
+      actions1: {ATK:0,HATK:0,DODGE:0,BLOCK:0},
+      actions2: {ATK:0,HATK:0,DODGE:0,BLOCK:0},
+      skillsUsed1: {},
+      skillsUsed2: {},
+      activeGranted1: {},
+      activeGranted2: {},
+      pendingGranted1: {},
+      pendingGranted2: {},
+      pendingActivated1: {},
+      pendingActivated2: {},
+      // anomalies (short logs)
+      anomalies: [] // {run, reason, rounds, top1, top2}
+    };
+  }
+
+  function inc(map, key, n=1){ map[key] = (map[key]||0)+n; }
+
+  function clonePlayerForSim(src){
+    const p = mkPlayer(src.name);
+    // copy build
+    p.classId = src.classId; p.classLabel = src.classLabel;
+    p.weaponId = src.weaponId; p.weaponLabel = src.weaponLabel;
+    p.weapon = { ...src.weapon };
+    p.armorId = src.armorId; p.armorLabel = src.armorLabel;
+    p.armor = { resist: { ...(src.armor?.resist || {}) } };
+    p.level = src.level;
+    p.int = src.int;
+    p.maxHp = src.maxHp; p.hp = src.maxHp;
+    p.baseMaxHpStart = src.maxHp;
+    // uses
+    p.maxUses = { ...src.maxUses };
+    p.uses = { ...src.maxUses };
+    // skills
+    p.equippedSkills = [...(src.equippedSkills || [])];
+    p.activeSkills = [];
+    p.pendingSkill = null;
+    // statuses/items/temp
+    p.status = { resistant:false, poison:0, burn:0 };
+    p.items = { RESIST_POTION: 0 };
+    p.itemUsedThisRound = false;
+    p.itemPick = null;
+    p.temp = { dodgeActiveS2:false, blockActiveS1:false };
+    // ai
+    p.ai = { ...(src.ai || {isNpc:true, aiInt:5, stance:"NEUTRAL"}) };
+    p.ai.isNpc = true;
+    return p;
+  }
+
+  function simListActiveSkillIds(p){
+    return (p.activeSkills || []).filter(s => s.uses > 0).map(s => s.id);
+  }
+
+  function simBestSkillByDmg(p){
+    const ids = simListActiveSkillIds(p);
+    let best=null, bestD=-1;
+    for (const id of ids){
+      const a = getAction(p, id);
+      const d = a.dmg ?? 0;
+      if (d > bestD){ bestD=d; best=id; }
+    }
+    return best;
+  }
+
+  function simBestAttackActionId(p){
+    // best damage among skills + base ATK/HATK
+    let best=null, bestD=-1;
+    for (const id of simListActiveSkillIds(p)){
+      const a = getAction(p, id);
+      const d = a.dmg ?? 0;
+      if (d > bestD){ bestD=d; best=id; }
+    }
+    if (p.uses.ATK > 0){
+      const a = getAction(p,"ATK"); if ((a.dmg??0) > bestD){ bestD=a.dmg??0; best="ATK"; }
+    }
+    if (p.uses.HATK > 0){
+      const a = getAction(p,"HATK"); if ((a.dmg??0) > bestD){ bestD=a.dmg??0; best="HATK"; }
+    }
+    return best;
+  }
+
+  function simNegateOption(enemyAction, npc){
+    if (!enemyAction || enemyAction.kind !== "attack") return null;
+    if (enemyAction.execSpeed === 1 && npc.uses.BLOCK > 0) return "BLOCK";
+    if (enemyAction.execSpeed === 2 && npc.uses.DODGE > 0) return "DODGE";
+    return null;
+  }
+
+  function simPickBaseMostUses(npc){
+    const avail = BASE_TIEBREAK.filter(id => (npc.uses[id] ?? 0) > 0);
+    if (!avail.length) return null;
+
+    let best = avail[0], bestU = npc.uses[best] ?? 0;
+    for (const id of avail){
+      const u = npc.uses[id] ?? 0;
+      if (u > bestU){ best=id; bestU=u; }
+    }
+    if (avail.length >= 2 && rng() < BASE_RANDOM_OTHER){
+      const others = avail.filter(x => x !== best);
+      return others[Math.floor(rng()*others.length)];
+    }
+    return best;
+  }
+
+  function simSpendPick(npc, pickId, resAgg){
+    if (SKILLS[pickId]){
+      const entry = npc.activeSkills.find(s => s.id === pickId);
+      if (!entry || entry.uses <= 0) return false;
+      entry.uses -= 1;
+      npc.activeSkills = npc.activeSkills.filter(s => s.uses > 0);
+      inc(resAgg, pickId, 1);
+      return true;
+    }
+    if ((npc.uses[pickId] ?? 0) <= 0) return false;
+    npc.uses[pickId] -= 1;
+    inc(resAgg, pickId, 1);
+    return true;
+  }
+
+  function simDecide(npc, enemy, enemyPickId, resCtx){
+    const aiInt = Math.max(1, Math.min(10, npc.ai?.aiInt ?? 5));
+    const stance = npc.ai?.stance ?? "NEUTRAL";
+    const readChance = aiInt / 10;
+    const canRead = !!enemyPickId;
+    const rollRead = rng();
+    const readOk = canRead && (rollRead < readChance);
+
+    resCtx.readRolls += 1;
+    if (readOk) resCtx.readSuccess += 1;
+
+    if (readOk){
+      const enemyAction = getAction(enemy, enemyPickId);
+      const enemyDmg = (enemyAction.kind === "attack") ? (enemyAction.dmg ?? 0) : 0;
+
+      const bestId = simBestAttackActionId(npc);
+      const bestAct = bestId ? getAction(npc, bestId) : null;
+      const bestDmg = bestAct?.dmg ?? 0;
+
+      if (bestAct && bestDmg >= enemyDmg) return bestId;
+
+      const neg = simNegateOption(enemyAction, npc);
+      if (neg) return neg;
+
+      return bestId || simPickBaseMostUses(npc) || "ATK";
+    }
+
+    // no-read behavior: skillchance + base most uses
+    const skillIds = simListActiveSkillIds(npc);
+    if (skillIds.length){
+      const sc = SKILL_CHANCE[stance] ?? 0.40;
+      const rollSkill = rng();
+      resCtx.skillRolls += 1;
+      if (rollSkill < sc){
+        resCtx.skillChosen += 1;
+        const bestSk = simBestSkillByDmg(npc);
+        if (bestSk) return bestSk;
+      }
+    }
+    return simPickBaseMostUses(npc) || ((npc.uses.ATK>0) ? "ATK" : ((npc.uses.HATK>0) ? "HATK" : "BLOCK"));
+  }
+
+  function simActivateDefenseAtSpeed(p, a, s){
+    if (a.kind !== "def") return;
+    if (a.id === "BLOCK" && s === 1) p.temp.blockActiveS1 = true;
+    if (a.id === "DODGE" && s === 2) p.temp.dodgeActiveS2 = true;
+  }
+
+  function simApplyAttack(att, def, a, s){
+    if (s === 1 && def.temp.blockActiveS1) return {dmg:0, negated:(a.dmg??0)>0, hit:false};
+    if (s === 2 && def.temp.dodgeActiveS2) return {dmg:0, negated:(a.dmg??0)>0, hit:false};
+
+    let dmg = a.dmg ?? 0;
+    const armorMult = def.armor?.resist?.[a.dmgType] ?? 1;
+    if (armorMult !== 1) dmg = floor(dmg * armorMult);
+    if (def.status.resistant) dmg = floor(dmg * STATUS.RESIST_MULT);
+
+    def.hp = Math.max(0, def.hp - dmg);
+    // apply status
+    if (a.applyStatus){
+      if (a.applyStatus.burn) def.status.burn = a.applyStatus.burn;
+      if (a.applyStatus.poison) def.status.poison = a.applyStatus.poison;
+    }
+    return {dmg, negated:false, hit:true};
+  }
+
+  function simCanGrantSkill(p, skillId){
+    // same rules as live combat: weapon sockets define equipped skills
+    return canGrantSkill(p, skillId);
+  }
+
+  function simScheduleSkillFromTrigger(p, trigger, pendingGrantedMap){
+    if (p.pendingSkill) return;
+    const candidates = SKILLS_BY_TRIGGER[trigger] || [];
+    for (const skillId of candidates){
+      if (simCanGrantSkill(p, skillId)){
+        p.pendingSkill = skillId;
+        inc(pendingGrantedMap, skillId, 1);
+        return;
+      }
+    }
+  }
+
+  function simGrantPending(p, activeGrantedMap, pendingActivatedMap){
+    if (!p.pendingSkill) return;
+    const skillId = p.pendingSkill;
+    if (p.activeSkills.length >= (p.weapon.slots || 0)){
+      p.pendingSkill = null; // wasted
+      return;
+    }
+    p.activeSkills.push({ id: skillId, uses: 1 });
+    inc(activeGrantedMap, skillId, 1);
+    inc(pendingActivatedMap, skillId, 1);
+    p.pendingSkill = null;
+  }
+
+  function simResetRound(p){
+    p.temp.dodgeActiveS2=false; p.temp.blockActiveS1=false;
+    // resistant only for this round
+    p.status.resistant = false;
+  }
+
+  function simulateOneFight(runIndex, baseP1, baseP2, results){
+    const p1 = clonePlayerForSim(baseP1);
+    const p2 = clonePlayerForSim(baseP2);
+    p1.name = "NPC 1"; p2.name = "NPC 2";
+
+    const ctx1 = {readRolls:0, readSuccess:0, skillRolls:0, skillChosen:0};
+    const ctx2 = {readRolls:0, readSuccess:0, skillRolls:0, skillChosen:0};
+
+    let rounds = 0;
+    let noDmgStreak = 0;
+
+    while (rounds < SIM_HARDCAP_ROUNDS){
+      rounds += 1;
+
+      // Alternate who picks first each round for fairness
+      const p1First = (rounds % 2 === 1);
+
+      let pick1=null, pick2=null;
+
+      if (p1First){
+        pick1 = simDecide(p1, p2, null, ctx1);
+        simSpendPick(p1, pick1, results.actions1);
+        if (SKILLS[pick1]) inc(results.skillsUsed1, pick1, 1);
+
+        pick2 = simDecide(p2, p1, pick1, ctx2);
+        simSpendPick(p2, pick2, results.actions2);
+        if (SKILLS[pick2]) inc(results.skillsUsed2, pick2, 1);
+      } else {
+        pick2 = simDecide(p2, p1, null, ctx2);
+        simSpendPick(p2, pick2, results.actions2);
+        if (SKILLS[pick2]) inc(results.skillsUsed2, pick2, 1);
+
+        pick1 = simDecide(p1, p2, pick2, ctx1);
+        simSpendPick(p1, pick1, results.actions1);
+        if (SKILLS[pick1]) inc(results.skillsUsed1, pick1, 1);
+      }
+
+      const a1 = getAction(p1, pick1);
+      const a2 = getAction(p2, pick2);
+
+      let dmgTo1 = 0;
+      let dmgTo2 = 0;
+
+      // speeds 0/1/2
+      for (const s of [0,1,2]){
+        simActivateDefenseAtSpeed(p1, a1, s);
+        simActivateDefenseAtSpeed(p2, a2, s);
+
+        const p1Atk = a1.kind==="attack" && a1.execSpeed===s;
+        const p2Atk = a2.kind==="attack" && a2.execSpeed===s;
+
+        if (p1Atk && p2Atk){
+          const r1 = simApplyAttack(p1, p2, a1, s);
+          const r2 = simApplyAttack(p2, p1, a2, s);
+          dmgTo2 += r1.dmg;
+          dmgTo1 += r2.dmg;
+
+          // triggers
+          if (r1.dmg>0){
+            const trig = a1.id==="ATK" ? "ATK_HIT" : a1.id==="HATK" ? "HATK_HIT" : (a1.isSkill ? `${a1.id}_HIT` : null);
+            if (trig && !a1.isSkill) simScheduleSkillFromTrigger(p1, trig, results.pendingGranted1);
+          }
+          if (r2.dmg>0){
+            const trig = a2.id==="ATK" ? "ATK_HIT" : a2.id==="HATK" ? "HATK_HIT" : (a2.isSkill ? `${a2.id}_HIT` : null);
+            if (trig && !a2.isSkill) simScheduleSkillFromTrigger(p2, trig, results.pendingGranted2);
+          }
+
+          if (r1.negated){
+            if (s===1 && p2.temp.blockActiveS1) simScheduleSkillFromTrigger(p2, "BLOCK_SUCCESS", results.pendingGranted2);
+            if (s===2 && p2.temp.dodgeActiveS2) simScheduleSkillFromTrigger(p2, "DODGE_SUCCESS", results.pendingGranted2);
+          }
+          if (r2.negated){
+            if (s===1 && p1.temp.blockActiveS1) simScheduleSkillFromTrigger(p1, "BLOCK_SUCCESS", results.pendingGranted1);
+            if (s===2 && p1.temp.dodgeActiveS2) simScheduleSkillFromTrigger(p1, "DODGE_SUCCESS", results.pendingGranted1);
+          }
+        } else if (p1Atk){
+          const r = simApplyAttack(p1, p2, a1, s);
+          dmgTo2 += r.dmg;
+          if (r.dmg>0 && !a1.isSkill){
+            const trig = a1.id==="ATK" ? "ATK_HIT" : "HATK_HIT";
+            simScheduleSkillFromTrigger(p1, trig, results.pendingGranted1);
+          }
+          if (r.negated){
+            if (s===1 && p2.temp.blockActiveS1) simScheduleSkillFromTrigger(p2, "BLOCK_SUCCESS", results.pendingGranted2);
+            if (s===2 && p2.temp.dodgeActiveS2) simScheduleSkillFromTrigger(p2, "DODGE_SUCCESS", results.pendingGranted2);
+          }
+        } else if (p2Atk){
+          const r = simApplyAttack(p2, p1, a2, s);
+          dmgTo1 += r.dmg;
+          if (r.dmg>0 && !a2.isSkill){
+            const trig = a2.id==="ATK" ? "ATK_HIT" : "HATK_HIT";
+            simScheduleSkillFromTrigger(p2, trig, results.pendingGranted2);
+          }
+          if (r.negated){
+            if (s===1 && p1.temp.blockActiveS1) simScheduleSkillFromTrigger(p1, "BLOCK_SUCCESS", results.pendingGranted1);
+            if (s===2 && p1.temp.dodgeActiveS2) simScheduleSkillFromTrigger(p1, "DODGE_SUCCESS", results.pendingGranted1);
+          }
+        }
+
+        if (p1.hp<=0 || p2.hp<=0) break;
+      }
+
+      // status phase (burn then poison)
+      for (const def of [p1,p2]){
+        if (def.hp<=0) continue;
+        if (def.status.burn>0){
+          let dmg = floor(def.baseMaxHpStart*STATUS.BURN_PCT);
+          if (def.status.resistant) dmg = floor(dmg*STATUS.RESIST_MULT);
+          def.hp = Math.max(0, def.hp-dmg);
+          if (def===p1) dmgTo1 += dmg; else dmgTo2 += dmg;
+          def.status.burn = Math.max(0, def.status.burn-1);
+        }
+        if (def.hp<=0) continue;
+        if (def.status.poison>0){
+          let dmg = floor(def.baseMaxHpStart*STATUS.POISON_PCT);
+          if (def.status.resistant) dmg = floor(dmg*STATUS.RESIST_MULT);
+          def.hp = Math.max(0, def.hp-dmg);
+          if (def===p1) dmgTo1 += dmg; else dmgTo2 += dmg;
+          def.status.poison = Math.max(0, def.status.poison-1);
+        }
+      }
+
+      // check no-dmg streak
+      if (dmgTo1===0 && dmgTo2===0) noDmgStreak += 1;
+      else noDmgStreak = 0;
+
+      // end-of-round
+      simResetRound(p1); simResetRound(p2);
+      simGrantPending(p1, results.activeGranted1, results.pendingActivated1);
+      simGrantPending(p2, results.activeGranted2, results.pendingActivated2);
+
+      // end checks
+      if (p1.hp<=0 || p2.hp<=0){
+        if (p1.hp<=0 && p2.hp<=0) return {winner:"DRAW", rounds, reason:"DOUBLE_KO"};
+        if (p2.hp<=0) return {winner:"NPC1", rounds, reason:"KO"};
+        return {winner:"NPC2", rounds, reason:"KO"};
+      }
+      if (noDmgStreak > SIM_NODMG_CAP){
+        return {winner:"DRAW", rounds, reason:"NO_DAMAGE_10"};
+      }
+    }
+    return {winner:"DRAW", rounds:SIM_HARDCAP_ROUNDS, reason:"CAP_50"};
+  }
+
+  function topAction(actions){
+    let best="ATK", bestC=-1;
+    for (const k of ["ATK","HATK","DODGE","BLOCK"]){
+      const c = actions[k]||0;
+      if (c>bestC){ bestC=c; best=k; }
+    }
+    return best;
+  }
+
+  function renderSimResults(results){
+    const panel = document.getElementById("simResultPanel");
+    const sum = document.getElementById("simSummary");
+    const n1a = document.getElementById("simNpc1Actions");
+    const n2a = document.getElementById("simNpc2Actions");
+    const n1s = document.getElementById("simNpc1Skills");
+    const n2s = document.getElementById("simNpc2Skills");
+    const anom = document.getElementById("simAnomalyLog");
+
+    if (!panel) return;
+    panel.style.display = "block";
+
+    const total = results.runs;
+    const avgRounds = results.rounds.length ? (results.rounds.reduce((a,b)=>a+b,0)/results.rounds.length) : 0;
+    const minR = results.rounds.length ? Math.min(...results.rounds) : 0;
+    const maxR = results.rounds.length ? Math.max(...results.rounds) : 0;
+
+    sum.innerHTML = `
+      <div><b>Siege:</b> NPC 1: ${fmtCountPct(results.wins1,total)} • NPC 2: ${fmtCountPct(results.wins2,total)} • Draw: ${fmtCountPct(results.draws,total)}</div>
+      <div><b>Runden:</b> Ø ${avgRounds.toFixed(2)} • Min ${minR} • Max ${maxR}</div>
+      <div><b>Draw-Gründe:</b> Cap 50: ${results.drawCap50} • No-Damage (10): ${results.drawNoDmg10}</div>
+    `;
+
+    const totalActs1 = Object.values(results.actions1).reduce((a,b)=>a+b,0);
+    const totalActs2 = Object.values(results.actions2).reduce((a,b)=>a+b,0);
+
+    const actLine = (acts,total) => ["ATK","HATK","DODGE","BLOCK"].map(k => `${k}: ${fmtCountPct(acts[k]||0,total)}`).join(" • ");
+    n1a.innerHTML = `<b>Basisaktionen</b><br/>${actLine(results.actions1,totalActs1)}<br/><span class="muted">Top: ${topAction(results.actions1)}</span>`;
+    n2a.innerHTML = `<b>Basisaktionen</b><br/>${actLine(results.actions2,totalActs2)}<br/><span class="muted">Top: ${topAction(results.actions2)}</span>`;
+
+    function skillSummary(used, activeGranted, pendingGranted, pendingActivated){
+      const usedKeys = Object.keys(used);
+      const topUsed = usedKeys.sort((a,b)=>(used[b]||0)-(used[a]||0)).slice(0,4)
+        .map(id=>`${SKILLS[id]?.label ?? id}: ${used[id]}`).join(" • ") || "—";
+
+      // active but never played: activeGranted - used
+      const neverPlayed = [];
+      for (const id of Object.keys(activeGranted)){
+        const diff = (activeGranted[id]||0) - (used[id]||0);
+        if (diff>0) neverPlayed.push(`${SKILLS[id]?.label ?? id}: ${diff}`);
+      }
+      // pending never active: pendingGranted - pendingActivated
+      const neverActive = [];
+      for (const id of Object.keys(pendingGranted)){
+        const diff = (pendingGranted[id]||0) - (pendingActivated[id]||0);
+        if (diff>0) neverActive.push(`${SKILLS[id]?.label ?? id}: ${diff}`);
+      }
+
+      return `
+        <b>Skills</b><br/>
+        <span class="muted">Genutzt (Top):</span> ${topUsed}<br/>
+        <span class="muted">Aktiv aber nie gespielt:</span> ${neverPlayed.length ? neverPlayed.join(" • ") : "—"}<br/>
+        <span class="muted">Pending nie aktiv:</span> ${neverActive.length ? neverActive.join(" • ") : "—"}
+      `;
+    }
+
+    n1s.innerHTML = skillSummary(results.skillsUsed1, results.activeGranted1, results.pendingGranted1, results.pendingActivated1);
+    n2s.innerHTML = skillSummary(results.skillsUsed2, results.activeGranted2, results.pendingGranted2, results.pendingActivated2);
+
+    // anomalies
+    anom.innerHTML = "";
+    if (!results.anomalies.length){
+      anom.innerHTML = `<div class="small muted">Keine Auffälligkeiten gespeichert.</div>`;
+    } else {
+      for (const a of results.anomalies.slice(0,50)){
+        const div = document.createElement("div");
+        div.innerHTML = `<b>Run #${a.run}</b> • ${a.reason} • Runden: ${a.rounds} • Top: NPC1=${a.top1}, NPC2=${a.top2}`;
+        anom.appendChild(div);
+      }
+    }
+  }
+
+  function startNpcVsNpcSimulation(){
+    // show fight panel for results
+    document.getElementById("setupPanel").style.display = "none";
+    document.getElementById("fightPanel").style.display = "block";
+    document.getElementById("phaseText").textContent = "Simulation läuft…";
+    // hide interaction
+    document.getElementById("baseActions").style.display = "none";
+    document.getElementById("skillActionsWrap").style.display = "none";
+    document.getElementById("itemBtn").style.display = "none";
+    const sel = document.getElementById("itemSelect"); if (sel) sel.style.display = "none";
+    document.getElementById("swap").style.display = "none";
+    document.getElementById("rematch").style.display = "none";
+
+    const results = createSimResults();
+    const runs = results.runs;
+
+    // reset stats maps for skills (ensure plain objects)
+    results.skillsUsed1 = {}; results.skillsUsed2 = {};
+    results.activeGranted1 = {}; results.activeGranted2 = {};
+    results.pendingGranted1 = {}; results.pendingGranted2 = {};
+    results.pendingActivated1 = {}; results.pendingActivated2 = {};
+
+    // Use the configured players as templates
+    const baseP1 = state.players[0];
+    const baseP2 = state.players[1];
+
+    for (let i=1;i<=runs;i++){
+      const out = simulateOneFight(i, baseP1, baseP2, results);
+      results.rounds.push(out.rounds);
+
+      if (out.winner === "NPC1") results.wins1 += 1;
+      else if (out.winner === "NPC2") results.wins2 += 1;
+      else {
+        results.draws += 1;
+        if (out.reason === "CAP_50"){ results.drawCap50 += 1; }
+        if (out.reason === "NO_DAMAGE_10"){ results.drawNoDmg10 += 1; }
+        if (out.reason === "CAP_50" || out.reason === "NO_DAMAGE_10"){
+          results.anomalies.push({
+            run:i,
+            reason: (out.reason === "CAP_50") ? "Draw (Cap 50)" : "Draw (10 Runden kein Schaden)",
+            rounds: out.rounds,
+            top1: topAction(results.actions1),
+            top2: topAction(results.actions2),
+          });
+        }
+      }
+    }
+
+    state.simResults = results;
+
+    document.getElementById("phaseText").textContent = "Simulation beendet";
+    renderSimResults(results);
+    // show restart button
+    document.getElementById("restart").style.display = "inline-block";
+    // make sure normal log doesn't confuse
+    log(`Simulation beendet: ${runs} Runs.`);
+  }
+
+
+  
+  // ---------------- Dungeon Mode (State Controller) ----------------
+  const DUNGEON_UI = { FIGHT:"FIGHT", LOOT:"LOOT", LEVEL_UP:"LEVEL_UP", INVENTORY:"INVENTORY", MERCHANT:"MERCHANT" };
+
+  let _dungeonStarting = false;
+
+  const DUNGEON_ITEMS = {
+    HEALING_POTION: { id:"HEALING_POTION", label:"Healing Potion", desc:"+40 HP (cap maxHP)", kind:"consumable" },
+    ACTION_CHARGE:  { id:"ACTION_CHARGE",  label:"Aktion Charge",  desc:"+5 ATK Uses & +5 HATK Uses (cap maxUses)", kind:"consumable" },
+    CURSE_POTION:   { id:"CURSE_POTION",   label:"Fluch Potion",   desc:"HP=1 • ATK Uses=0 • HATK Uses=0", kind:"consumable" },
+  };
+
+  // Attach dungeon state to global state (lazy init for backwards compatibility)
+  function ensureDungeonState(){
+    if (!state.dungeon){
+      state.dungeon = {
+        active:false,
+        ui:DUNGEON_UI.FIGHT,
+        stage:0,
+        floor:1,
+        maxFloor:6,
+        gold:0,
+        xp:0,
+        loot:null,
+        completed:false,
+        inv:{ HEALING_POTION:0, ACTION_CHARGE:0, CURSE_POTION:0 },
+        lastLevelUp:null
+      };
+    }
+    return state.dungeon;
+  }
+
+
+// ---------------- Dungeon Run Economy ----------------
+// Gold exists ONLY for the current dungeon run (state.dungeon.gold).
+// Outside of an active dungeon run, gold is implicitly 0.
+function getRunGold(){
+  const d = state.dungeon;
+  return (d && d.active) ? (d.gold ?? 0) : 0;
+}
+function canAffordRunGold(cost){
+  return getRunGold() >= cost;
+}
+function spendRunGold(cost, reason=""){
+  const d = ensureDungeonState();
+  if (!d.active) return false;
+  if ((d.gold ?? 0) < cost) return false;
+  d.gold -= cost;
+  if (reason) log(`Gold -${cost}: ${reason}`);
+  return true;
+}
+function earnRunGold(amount, reason=""){
+  const d = ensureDungeonState();
+  if (!d.active) return;
+  d.gold += amount;
+  if (reason) log(`Gold +${amount}: ${reason}`);
+}
+
+
+  function setDungeonUI(ui){
+    const d = ensureDungeonState();
+    d.ui = ui;
+
+    const wrap = document.getElementById("dungeonWrap");
+    const f = document.getElementById("dungeonFight");
+    const l = document.getElementById("dungeonLoot");
+    const u = document.getElementById("dungeonLevelUp");
+    const i = document.getElementById("dungeonInventory");
+
+    wrap.style.display = d.active ? "block" : "none";
+    if (!d.active) return;
+
+    f.style.display = (ui === DUNGEON_UI.FIGHT) ? "block" : "none";
+    l.style.display = (ui === DUNGEON_UI.LOOT) ? "block" : "none";
+    u.style.display = (ui === DUNGEON_UI.LEVEL_UP) ? "block" : "none";
+    i.style.display = (ui === DUNGEON_UI.INVENTORY || ui === DUNGEON_UI.MERCHANT) ? "block" : "none";
+
+    // header
+    const meta = document.getElementById("dungeonHeaderMeta");
+    const title = document.getElementById("dungeonHeaderTitle");
+    if (title) title.textContent = d.completed ? "Dungeon abgeschlossen" : "Dungeon";
+    if (meta) meta.textContent = `Stufe ${d.stage} • Ebene ${d.floor}/${d.maxFloor}`;
+
+    // Merchant floor (Ebene 6)
+    const isMerchantFloor = (d.floor === 6);
+    if (ui === DUNGEON_UI.MERCHANT && title) title.textContent = "Wandering Merchant";
+
+    // update fight text/button for completion
+    const fightText = document.getElementById("dungeonFightText");
+    const winBtn = document.getElementById("dungeonFightWinBtn");
+    if (d.completed){
+      if (fightText) fightText.textContent = `Du hast Ebene ${d.maxFloor} abgeschlossen. (Grundgerüst fertig)`;
+      if (winBtn) winBtn.textContent = "Zurück zum Menü";
+    } else if (isMerchantFloor){
+      if (fightText) fightText.textContent = "Du triffst auf einen Wandering Merchant.";
+      if (winBtn) winBtn.textContent = "Zum Händler";
+    } else {
+      if (fightText) fightText.textContent = "Du triffst auf einen Gegner. (Platzhalter-Layout)";
+      if (winBtn) winBtn.textContent = "Gegner besiegt";
+    }
+  }
+
+  
+  function applyStandardDungeonLoadout(p){
+    // Standard starter equipment as OWNED instances.
+    // Weapon: Short Sword with 2 socketed skill items (SUPER_HEAVY + FAST_ATTACK)
+    // Armor: Starter Gear (-10% slash/strike)
+    ensureOwnedArrays(p);
+    ensureSkillInventory(p);
+
+    // --- Weapon ---
+    let wUid = findFirstOwnedWeaponUid(p, "SHORT_SWORD");
+    if (!wUid) wUid = addWeaponInstance(p, "SHORT_SWORD");
+
+    // make sure weapon has sockets + fill the first two with fresh skill items (duplicates allowed elsewhere)
+    const wInst = p.ownedWeapons.find(w => w.uid === wUid);
+    const wDef = WEAPONS[wInst.id];
+    ensureWeaponSockets(wInst, wDef);
+
+    // wipe sockets (so calling this twice is deterministic)
+    for (let i=0;i<wInst.socketedSkillUids.length;i++) wInst.socketedSkillUids[i] = null;
+
+    // create 2 skill items and socket them
+    const uid1 = newUid("skit"); p.skillItems[uid1] = { uid: uid1, skillId: "SUPER_HEAVY" };
+    const uid2 = newUid("skit"); p.skillItems[uid2] = { uid: uid2, skillId: "FAST_ATTACK" };
+    if (wInst.socketedSkillUids.length > 0) wInst.socketedSkillUids[0] = uid1;
+    if (wInst.socketedSkillUids.length > 1) wInst.socketedSkillUids[1] = uid2;
+
+    // Equip weapon (derives p.weapon* + sync equippedSkills)
+    equipWeaponByUid(p, wUid);
+
+    // --- Armor ---
+    let aUid = findFirstOwnedArmorUid(p, "STARTER_GEAR");
+    if (!aUid) aUid = addArmorInstance(p, "STARTER_GEAR");
+    equipArmorByUid(p, aUid);
+  }
+
+function startDungeon(){
+    // Dungeon uses Spieler 1 als aktiven Charakter
+    if (_dungeonStarting) return; // simple re-entrancy guard
+    _dungeonStarting = true;
+
+    const d = ensureDungeonState();
+    d.active = true;
+    d.completed = false;
+    d.stage = 0;
+    d.floor = 1;
+    d.maxFloor = 6;
+    d.gold = 0;
+    d.xp = 0;
+    d.loot = null;
+    d.inv = { HEALING_POTION:0, ACTION_CHARGE:0, CURSE_POTION:0 };
+    d.lastLevelUp = null;
+
+    // Standard-Dungeon-Setup (Variante 2: echte Items)
+    applyStandardDungeonLoadout(state.players[0]);
+
+    // mark phase so we never fall back into the normal fight UI
+    state.phase = "DUNGEON";
+
+    // hide existing panels (safety)
+    const sp = document.getElementById("setupPanel");
+    const fp = document.getElementById("fightPanel");
+    if (sp) sp.style.display = "none";
+    if (fp) fp.style.display = "none";
+
+    setDungeonUI(DUNGEON_UI.FIGHT);
+    renderDungeonInventory(); // prefill selects etc.
+
+    // force a UI refresh (some browsers keep old panels visible otherwise)
+    render();
+
+    _dungeonStarting = false;
+  }
+
+  function exitDungeonToMenu(){
+    // simplest: reset everything to main flow
+    ensureDungeonState().active = false;
+    setDungeonUI(DUNGEON_UI.FIGHT);
+    resetAll();
+  }
+
+  function genDungeonLoot(){
+    // Placeholder gold/xp + Consumables + always one Test-Waffe (Short Sword mit 2× Giftstachel)
+    return {
+      gold: 10,
+      xp: 5,
+      items: [
+        { ...DUNGEON_ITEMS.HEALING_POTION, count:1, kind:"consumable" },
+        { ...DUNGEON_ITEMS.ACTION_CHARGE,  count:1, kind:"consumable" },
+        { ...DUNGEON_ITEMS.CURSE_POTION,   count:1, kind:"consumable" },
+
+        // --- TEST LOOT (Dungeon only): Short Sword with 2× Giftstachel socketed ---
+        {
+          id: "TEST_WEAPON_SHORT_SWORD_2X_GIFTSTACHEL",
+          label: "Short Sword (2× Giftstachel)",
+          desc: "Test-Loot: Diese Waffe kommt in jedem Loot-Pool im Dungeon vor.",
+          kind: "weapon",
+          weaponId: "SHORT_SWORD",
+          socketSkillIds: ["GIFTSTACHEL","GIFTSTACHEL"]
+        },
+      ]
+    };
+  }
+
+  
+  // --- Loot helper: add a weapon instance with pre-socketed skill items (Option A: skill-items) ---
+  function addLootWeaponWithSockets(p, weaponId, socketSkillIds){
+    ensureOwnedArrays(p);
+    ensureSkillInventory(p);
+
+    const wUid = addWeaponInstance(p, weaponId);
+    const wInst = p.ownedWeapons.find(w => w.uid === wUid);
+    const wDef = WEAPONS[wInst.id];
+    ensureWeaponSockets(wInst, wDef);
+
+    // wipe sockets then fill from socketSkillIds (duplicates allowed)
+    for (let i=0;i<wInst.socketedSkillUids.length;i++) wInst.socketedSkillUids[i] = null;
+
+    for (let i=0;i<Math.min(socketSkillIds.length, wInst.socketedSkillUids.length);i++){
+      const skillId = socketSkillIds[i];
+      const uid = newUid("skit");
+      p.skillItems[uid] = { uid, skillId };
+      wInst.socketedSkillUids[i] = uid;
+    }
+    return wUid;
+  }
+
+
+  function dungeonWinFight(){
+    const d = ensureDungeonState();
+    if (d.completed){ exitDungeonToMenu(); return; }
+
+    // Ebene 6: Wandering Merchant (kein Kampf/Loot)
+    if (d.floor === 6){
+      // Wichtig: UI zuerst setzen, damit Inventory-Render weiß, dass Skill-Bearbeitung erlaubt ist.
+      setDungeonUI(DUNGEON_UI.MERCHANT);
+      renderDungeonInventory();
+      return;
+    }
+
+    d.loot = genDungeonLoot();
+    renderDungeonLoot();
+    setDungeonUI(DUNGEON_UI.LOOT);
+  }
+
+  function renderDungeonLoot(){
+    const d = ensureDungeonState();
+    const loot = d.loot;
+    document.getElementById("lootGold").textContent = `Gold: ${loot?.gold ?? "—"}`;
+    document.getElementById("lootXp").textContent = `XP: ${loot?.xp ?? "—"}`;
+
+    const cont = document.getElementById("lootItems");
+    cont.innerHTML = "";
+    if (!loot) return;
+
+    for (const it of loot.items){
+      const row = document.createElement("div");
+      row.className = "lootRow";
+
+      const lab = document.createElement("label");
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = true;
+      cb.dataset.itemId = it.id;
+
+      const text = document.createElement("div");
+      text.innerHTML = `<div><b>${it.label}</b> <span class="muted">×${it.count}</span></div><div class="small muted">${it.desc}</div>`;
+
+      lab.appendChild(cb);
+      lab.appendChild(text);
+
+      row.appendChild(lab);
+      cont.appendChild(row);
+    }
+  }
+
+  function confirmDungeonLoot(){
+    const d = ensureDungeonState();
+    if (!d.loot) return;
+
+    // add placeholders
+    earnRunGold((d.loot.gold ?? 0), "Loot");
+    d.xp += (d.loot.xp ?? 0);
+
+    // read selections
+    const checks = [...document.querySelectorAll("#lootItems input[type=checkbox]")];
+    for (const cb of checks){
+      if (!cb.checked) continue;
+      const id = cb.dataset.itemId;
+
+      const picked = (d.loot.items || []).find(x => x.id === id);
+      if (!picked) continue;
+
+      // Consumables go into dungeon inventory
+      if ((picked.kind || picked.kind === undefined) && picked.kind !== "weapon"){
+        if (d.inv[id] == null) d.inv[id] = 0;
+        d.inv[id] += (picked.count ?? 1);
+        continue;
+      }
+
+      // Weapons are added as owned weapon instances with their socketed skill-items
+      if (picked.kind === "weapon"){
+        const p = state.players[0];
+        addLootWeaponWithSockets(p, picked.weaponId, picked.socketSkillIds || []);
+      }
+    }
+
+    d.loot = null;
+
+    // Level-up placeholder: apply small growth each floor
+    const p = state.players[0];
+    const delta = {
+      maxHp: 5,
+      maxAtk: 1,
+      maxHatk: 1
+    };
+
+    // Apply immediately so inventory reflects it
+    p.maxHp += delta.maxHp;
+    p.hp = p.maxHp; // keep it simple for now
+    p.maxUses.ATK += delta.maxAtk;
+    p.maxUses.HATK += delta.maxHatk;
+    p.uses.ATK = Math.min(p.maxUses.ATK, p.uses.ATK + delta.maxAtk);
+    p.uses.HATK = Math.min(p.maxUses.HATK, p.uses.HATK + delta.maxHatk);
+
+    d.lastLevelUp = delta;
+
+    renderDungeonLevelUp();
+    setDungeonUI(DUNGEON_UI.LEVEL_UP);
+  }
+
+  function renderDungeonLevelUp(){
+    const d = ensureDungeonState();
+    const p = state.players[0];
+    const delta = d.lastLevelUp || {maxHp:0,maxAtk:0,maxHatk:0};
+
+    const lines = [
+      `Max HP: +${delta.maxHp} → ${p.maxHp}`,
+      `Max ATK Uses: +${delta.maxAtk} → ${p.maxUses.ATK}`,
+      `Max HATK Uses: +${delta.maxHatk} → ${p.maxUses.HATK}`,
+    ];
+    document.getElementById("levelUpSummary").innerHTML = lines.map(x=>`• ${x}`).join("<br/>");
+  }
+
+  function continueAfterLevelUp(){
+    renderDungeonInventory();
+    setDungeonUI(DUNGEON_UI.INVENTORY);
+  }
+
+  function clampInvUses(p){
+    p.hp = Math.max(0, Math.min(p.hp, p.maxHp));
+    for (const id of ["ATK","HATK","DODGE","BLOCK"]){
+      p.uses[id] = Math.max(0, Math.min(p.uses[id], p.maxUses[id]));
+    }
+  }
+
+  function useDungeonItem(itemId){
+    const d = ensureDungeonState();
+    const p = state.players[0];
+
+    if ((d.inv[itemId] ?? 0) <= 0) return;
+
+    if (itemId === "HEALING_POTION"){
+      p.hp = Math.min(p.maxHp, p.hp + 40);
+      d.inv[itemId] -= 1;
+    }
+    if (itemId === "ACTION_CHARGE"){
+      p.uses.ATK = Math.min(p.maxUses.ATK, p.uses.ATK + 5);
+      p.uses.HATK = Math.min(p.maxUses.HATK, p.uses.HATK + 5);
+      d.inv[itemId] -= 1;
+    }
+    if (itemId === "CURSE_POTION"){
+      p.hp = 1;
+      p.uses.ATK = 0;
+      p.uses.HATK = 0;
+      d.inv[itemId] -= 1;
+    }
+
+    clampInvUses(p);
+    renderDungeonInventory();
+  }
+
+  // Inventory equipment UI (separate from setup)
+  function fillInvSelectOptions(){
+    // Dropdowns removed: no-op.
+    return;
+  }
+
+  // --- Dungeon Inventory Skills UI (per weapon instance) ---
+  
+  function canEditWeaponSkillsNow(){
+    const d = state.dungeon;
+    // Outside of dungeon mode (PvE/PvP/NvN etc.), skill editing is allowed as usual.
+    if (!(d && d.active)) return true;
+    // In dungeon mode, skill editing is only allowed at the Wandering Merchant (floor 6).
+    return d.ui === DUNGEON_UI.MERCHANT;
+  }
+
+  function merchantBuy(itemId){
+    const d = ensureDungeonState();
+    if (!d.active || d.ui !== DUNGEON_UI.MERCHANT) return;
+    const offer = MERCHANT_OFFERS.find(o => o.id === itemId);
+    if (!offer) return;
+    const curGold = getRunGold();
+    if (curGold < offer.price){
+      log(`Nicht genug Gold (${curGold}/${offer.price}).`);
+      return;
+    }
+    if (!spendRunGold(offer.price, `Merchant: ${offer.label}`)) return;
+    d.inv[itemId] = (d.inv[itemId] ?? 0) + 1;
+    log(`Gekauft: ${offer.label} (-${offer.price}g).`);
+    renderDungeonInventory();
+  }
+
+
+function buildInvSkillsUIForPlayer(p){
+    const list = document.getElementById("invSkillsList");
+    const hint = document.getElementById("invSkillsLimitHint");
+    if (!list) return;
+    list.innerHTML = "";
+
+    ensureOwnedArrays(p);
+    ensureSkillInventory(p);
+
+    const canEdit = canEditWeaponSkillsNow();
+
+    const inst = getEquippedWeaponInst(p);
+    const wDef = inst ? WEAPONS[inst.id] : null;
+    const slots = wDef?.slots || 0;
+    const dmgType = wDef?.type?.atk || "—";
+    if (inst && wDef) ensureWeaponSockets(inst, wDef);
+
+    if (hint) hint.textContent = `Waffentyp: ${dmgType} • Slots: ${slots}` + (canEdit ? " • Bearbeiten: AN" : " • Bearbeiten: nur beim Wandering Merchant (Ebene 6)");
+
+    if (!inst || !wDef || slots <= 0){
+      const div = document.createElement("div");
+      div.className = "small muted";
+      div.textContent = "Keine Waffe ausgerüstet oder keine Slots.";
+      list.appendChild(div);
+      return;
+    }
+
+    // --- Section: weapon sockets ---
+    const h1 = document.createElement("div");
+    h1.className = "small muted";
+    h1.style.margin = "6px 0 4px";
+    h1.textContent = "In der Waffe:";
+    list.appendChild(h1);
+
+    for (let i=0;i<slots;i++){
+      const uid = inst.socketedSkillUids[i];
+      const skillId = uid ? (p.skillItems[uid]?.skillId || null) : null;
+      const sk = skillId ? SKILLS[skillId] : null;
+
+      const row = document.createElement("div");
+      row.className = "row";
+      row.style.display = "flex";
+      row.style.gap = "8px";
+      row.style.alignItems = "center";
+      row.style.justifyContent = "space-between";
+
+      const left = document.createElement("div");
+      left.innerHTML = `<div><b>Slot ${i+1}:</b> ${sk ? sk.label : "<span class='muted'>leer</span>"}</div>` +
+                       (sk ? `<div class="small muted">${sk.desc || ""}</div>` : "");
+
+      const btn = document.createElement("button");
+      btn.className = "btn";
+      btn.textContent = uid ? (canEdit ? "Entfernen" : "Gesperrt") : "—";
+      btn.disabled = !uid || !canEdit;
+      btn.onclick = () => {
+        if (!canEdit) return;
+        unsocketSkillItemFromWeapon(p, i);
+        buildInvSkillsUIForPlayer(p);
+        render();
+      };
+
+      row.appendChild(left);
+      row.appendChild(btn);
+      list.appendChild(row);
+    }
+
+    // --- Section: inventory items that match weapon type ---
+    const h2 = document.createElement("div");
+    h2.className = "small muted";
+    h2.style.margin = "10px 0 4px";
+    h2.textContent = "Im Inventar (passend):";
+    list.appendChild(h2);
+
+    const matching = (p.skillInv || []).filter(uid => {
+      const it = p.skillItems[uid];
+      const sk = it ? SKILLS[it.skillId] : null;
+      return sk && sk.dmgType === dmgType;
+    });
+
+    if (!matching.length){
+      const div = document.createElement("div");
+      div.className = "small muted";
+      div.textContent = "Keine passenden Skill-Items im Inventar.";
+      list.appendChild(div);
+      return;
+    }
+
+    for (const uid of matching){
+      const it = p.skillItems[uid];
+      const sk = SKILLS[it.skillId];
+
+      const row = document.createElement("div");
+      row.className = "row";
+      row.style.display = "flex";
+      row.style.gap = "8px";
+      row.style.alignItems = "center";
+      row.style.justifyContent = "space-between";
+
+      const left = document.createElement("div");
+      left.innerHTML = `<div><b>${sk.label}</b></div><div class="small muted">${sk.desc || ""}</div>`;
+
+      const btn = document.createElement("button");
+      btn.className = "btn primary";
+      btn.textContent = canEdit ? "Sockeln" : "Gesperrt";
+      btn.disabled = !canEdit;
+      btn.onclick = () => {
+        if (!canEdit) return;
+        socketSkillItemToWeapon(p, uid);
+        buildInvSkillsUIForPlayer(p);
+        render();
+      };
+
+      row.appendChild(left);
+      row.appendChild(btn);
+      list.appendChild(row);
+    }
+  }
+
+  function readInvSelectedSkills(p){
+    // Skills live on the weapon sockets now; nothing to read from checkboxes.
+    syncEquippedSkillsFromWeapon(p);
+  }
+
+
+  
+  function fmtUid(uid){
+    if (!uid) return "";
+    return String(uid).slice(-4).toUpperCase();
+  }
+
+  function renderInvEquipmentLists(p){
+  const wEq = document.getElementById("invWeaponEquipped");
+  const aEq = document.getElementById("invArmorEquipped");
+  const wList = document.getElementById("invWeaponList");
+  const aList = document.getElementById("invArmorList");
+  if (!wEq || !aEq || !wList || !aList) return;
+
+  const MAX_WEAPON_SLOTS = 6;
+  const MAX_ARMOR_SLOTS  = 6;
+
+  const fmtResist = (resistObj) => {
+    if (!resistObj || !Object.keys(resistObj).length) return "—";
+    return Object.entries(resistObj)
+      .map(([k,v]) => `${k} ${Math.round((1 - v) * 100)}%`)
+      .join(" · ");
+  };
+
+  // Equipped weapon
+  const curW = (p.ownedWeapons || []).find(x => x.uid === p.equippedWeaponUid);
+  const curWCfg = curW ? WEAPONS[curW.id] : null;
+  wEq.innerHTML = `
+    <div class="invCard" style="width:100%">
+      <div class="meta">
+        <div class="title">${curWCfg ? curWCfg.label : "—"} <span class="invBadge">aktiv</span></div>
+        <div class="sub">${curWCfg ? `type: ${curWCfg.type.atk} · slots: ${curWCfg.slots}` : ""}</div>
+      </div>
+      <div class="invBadge">Equipped</div>
+    </div>
+  `;
+
+  // Equipped armor
+  const curA = (p.ownedArmors || []).find(x => x.uid === p.equippedArmorUid);
+  const curACfg = curA ? (ARMORS[curA.id] || ARMORS.NONE) : (ARMORS.NONE);
+  aEq.innerHTML = `
+    <div class="invCard" style="width:100%">
+      <div class="meta">
+        <div class="title">${curACfg ? curACfg.label : "—"} <span class="invBadge">aktiv</span></div>
+        <div class="sub">resist: ${fmtResist(curACfg && curACfg.resist)}</div>
+      </div>
+      <div class="invBadge">Equipped</div>
+    </div>
+  `;
+
+  // Weapon grid
+  wList.innerHTML = "";
+  wList.className = "invGrid";
+  const weapons = (p.ownedWeapons || []);
+  for (let i=0;i<MAX_WEAPON_SLOTS;i++){
+    const it = weapons[i];
+    if (!it){
+      const ph = document.createElement("div");
+      ph.className = "invCard placeholder";
+      wList.appendChild(ph);
+      continue;
+    }
+    const cfg = WEAPONS[it.id];
+    const isEq = (it.uid === p.equippedWeaponUid);
+
+    const card = document.createElement("div");
+    card.className = "invCard";
+    card.innerHTML = `
+      <div class="meta">
+        <div class="title">${cfg.label}${isEq ? ' <span class="invBadge">aktiv</span>' : ''}</div>
+        <div class="sub">type: ${cfg.type.atk} · slots: ${cfg.slots}</div>
+      </div>
+      <div style="display:flex;gap:6px;justify-content:flex-end"><button class="equip" ${isEq ? "disabled" : ""}>${isEq ? "Aktiv" : "Equip"}</button><button class="drop" ${isEq ? "disabled" : ""}>Ablagen</button></div>
+    `;
+    const equipBtn = card.querySelector("button.equip");
+    const dropBtn = card.querySelector("button.drop");
+    if (!isEq && equipBtn){
+      equipBtn.onclick = () => {
+        readInvSelectedSkills(p);
+        equipWeaponByUid(p, it.uid);
+        renderDungeonInventory();
+      };
+    }
+    if (dropBtn){
+      dropBtn.onclick = () => {
+        // Drop weapon to free slot
+        dropWeaponByUid(p, it.uid);
+        renderDungeonInventory();
+      };
+    }
+    wList.appendChild(card);
+  }
+
+  // Armor grid
+  aList.innerHTML = "";
+  aList.className = "invGrid";
+  const armors = (p.ownedArmors || []);
+  for (let i=0;i<MAX_ARMOR_SLOTS;i++){
+    const it = armors[i];
+    if (!it){
+      const ph = document.createElement("div");
+      ph.className = "invCard placeholder";
+      aList.appendChild(ph);
+      continue;
+    }
+    const cfg = ARMORS[it.id] || ARMORS.NONE;
+    const isEq = (it.uid === p.equippedArmorUid);
+
+    const card = document.createElement("div");
+    card.className = "invCard";
+    card.innerHTML = `
+      <div class="meta">
+        <div class="title">${cfg.label}${isEq ? ' <span class="invBadge">aktiv</span>' : ''}</div>
+        <div class="sub">resist: ${fmtResist(cfg.resist)}</div>
+      </div>
+      <div style="display:flex;gap:6px;justify-content:flex-end"><button class="equip" ${isEq ? "disabled" : ""}>${isEq ? "Aktiv" : "Equip"}</button><button class="drop" ${isEq ? "disabled" : ""}>Ablagen</button></div>
+    `;
+    const equipBtn = card.querySelector("button.equip");
+    const dropBtn = card.querySelector("button.drop");
+    if (!isEq && equipBtn){
+      equipBtn.onclick = () => {
+        equipArmorByUid(p, it.uid);
+        renderDungeonInventory();
+      };
+    }
+    if (dropBtn){
+      dropBtn.onclick = () => {
+        dropArmorByUid(p, it.uid);
+        renderDungeonInventory();
+      };
+    }
+    aList.appendChild(card);
+  }
+}
+
+function renderDungeonInventory(){
+    // Safety: ensure we always have at least starter gear so UI is never empty
+    const p = state.players[0];
+    if (!p.ownedWeapons || !p.ownedWeapons.length || !p.equippedWeaponUid || !p.ownedArmors || !p.ownedArmors.length || !p.equippedArmorUid){
+      applyStandardDungeonLoadout(p);
+    }
+
+    const d = ensureDungeonState();
+    if (!d.active) return;
+
+    fillInvSelectOptions();
+
+    // p already defined above
+    
+    document.getElementById("invStats").innerHTML =
+      `HP: <b>${p.hp}</b>/<b>${p.maxHp}</b><br/>` +
+      `Uses: ATK <b>${p.uses.ATK}</b>/<b>${p.maxUses.ATK}</b> • HATK <b>${p.uses.HATK}</b>/<b>${p.maxUses.HATK}</b> • DODGE <b>${p.uses.DODGE}</b>/<b>${p.maxUses.DODGE}</b> • BLOCK <b>${p.uses.BLOCK}</b>/<b>${p.maxUses.BLOCK}</b><br/>` +
+      `Waffe: <b>${p.weaponLabel}</b> • Rüstung: <b>${p.armorLabel ?? "—"}</b><br/>` +
+      `Skills in Waffe: <b>${(() => { const inst = getEquippedWeaponInst(p); const wDef = inst ? WEAPONS[inst.id] : null; if (!inst || !wDef) return "—"; ensureWeaponSockets(inst, wDef); ensureSkillInventory(p); return inst.socketedSkillUids.map(uid => { if (!uid) return "leer"; const sid = p.skillItems[uid]?.skillId; const sk = SKILLS[sid]; return sk ? sk.label : (sid || "?"); }).join(", "); })()}</b><br/>` +
+      `Dungeon: Gold <b>${getRunGold()}</b> • XP <b>${d.xp}</b>`;
+
+    document.getElementById("cntHeal").textContent = String(d.inv.HEALING_POTION ?? 0);
+    document.getElementById("cntCharge").textContent = String(d.inv.ACTION_CHARGE ?? 0);
+    document.getElementById("cntCurse").textContent = String(d.inv.CURSE_POTION ?? 0);
+
+    // enable/disable item buttons
+    document.getElementById("useHealBtn").disabled = (d.inv.HEALING_POTION ?? 0) <= 0;
+    document.getElementById("useChargeBtn").disabled = (d.inv.ACTION_CHARGE ?? 0) <= 0;
+    document.getElementById("useCurseBtn").disabled = (d.inv.CURSE_POTION ?? 0) <= 0;
+
+    document.getElementById("invItemHint").textContent =
+      "Healing Potion: +40 HP • Aktion Charge: +5 ATK/+5 HATK Uses • Fluch Potion: HP=1 & Uses=0";
+
+    // Merchant shop UI (only on Ebene 6 / MERCHANT UI)
+    const shopBox = document.getElementById("merchantShopBox");
+    if (shopBox){
+      if (d.ui === DUNGEON_UI.MERCHANT){
+        const rows = MERCHANT_OFFERS.map(o => {
+          const disabled = getRunGold() < o.price ? "disabled" : "";
+          return `<button ${disabled} data-offer=\"${o.id}\">Kaufen: ${o.label} (${o.price}g)</button>`;
+        }).join(" ");
+        shopBox.innerHTML = `
+          <div class="card" style="padding:12px;margin-top:6px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+              <b>Wandering Merchant</b>
+              <span class="small muted">Gold: <b>${getRunGold()}</b></span>
+            </div>
+            <div class="row" style="margin-top:10px;gap:10px;flex-wrap:wrap">
+              ${rows}
+            </div>
+            <div class="small muted" style="margin-top:8px">Shop ist noch simpel: feste Preise, unbegrenzter Vorrat.</div>
+          </div>
+        `;
+
+        // Wire up merchant buy buttons (avoid inline onclick for CSP compatibility)
+        shopBox.querySelectorAll('button[data-offer]').forEach(btn => {
+          btn.onclick = () => merchantBuy(btn.getAttribute('data-offer'));
+        });
+      } else {
+        shopBox.innerHTML = "";
+      }
+    }
+
+    // Render equipped + inventory lists (dropdowns removed)
+    renderInvEquipmentLists(p);
+
+    buildInvSkillsUIForPlayer(p);
+
+  }
+
+  function invApplyEquip(){
+    const p = state.players[0];
+    // Save skill selection for currently equipped weapon instance
+    readInvSelectedSkills(p);
+// combat-only skills not needed in dungeon right now
+    clearCombatSkills(p);
+    renderDungeonInventory();
+  }
+
+
+  function nextDungeonFloor(){
+    const d = ensureDungeonState();
+    if (d.completed){ exitDungeonToMenu(); return; }
+
+    if (d.floor >= d.maxFloor){
+      d.completed = true;
+      setDungeonUI(DUNGEON_UI.FIGHT);
+      return;
+    }
+
+    d.floor += 1;
+    setDungeonUI(DUNGEON_UI.FIGHT);
+  }
+
+// ---------------- Reset / Rematch ----------------
+  function resetAll(){
+    state.playmode = "PVP";
+    state.simRuns = 100;
+    state.simResults = null;
+    state.dungeon = null;
+    state.players[0] = mkPlayer("Spieler 1");
+    state.players[1] = mkPlayer("Spieler 2");
+    state.round = 1;
+    state.phase = "CLASS_P1";
+    state.picks = [null, null];
+    state.ended = false;
+    logEl.innerHTML = "";
+    render();
+    setSetupDefaults();
+  }
+
+  function rematchWeapons(){
+    if (!state.ended) return;
+
+    // reset fight resources but keep class + level
+    for (const p of state.players){
+      p.hp = p.maxHp;
+      p.baseMaxHpStart = p.maxHp;
+      for (const id of ACTION_IDS) p.uses[id] = p.maxUses[id];
+      resetTemp(p);
+      clearCombatSkills(p);
+      p.skillItems = {};
+      p.skillInv = [];
+      p.equippedSkills = [];
+    applyArmor(p, "NONE");
+      p.weaponId = null; p.weaponLabel="—"; p.weapon.slots=0; p.weapon.dmgType="—";
+      p.armorId = "NONE"; p.armorLabel="Keine"; p.armor = { resist:{} };
+      p.status = { resistant:false, poison:0, burn:0 };
+      p.items = { RESIST_POTION: ITEMS.RESIST_POTION.usesPerFight };
+      clearRoundItem(p);
+    }
+
+    state.round = 1;
+    state.picks = [null, null];
+    state.ended = false;
+    state.phase = "WEAPON_P1";
+    log("Rematch: Waffen (und Skills) neu wählen.");
+    render();
+    setSetupDefaults();
+  }
+
+  // Playmode change: keep UI reactive in setup
+  const modeSelectEl = document.getElementById("modeSelect");
+  if (modeSelectEl){
+    modeSelectEl.onchange = () => {
+      // Persist selection immediately; otherwise setSetupDefaults() would reset to state.playmode (default PVP).
+      state.playmode = modeSelectEl.value || "PVP";
+      // If we leave dungeon mode, make sure any previously running dungeon is fully deactivated
+      // so setup & skill editing in PvP/PvE/NvN work normally.
+      if (state.playmode !== "DUNGEON" && state.dungeon) {
+        state.dungeon.active = false;
+        state.dungeon.ui = DUNGEON_UI.FIGHT;
+      }
+      // NPC flags for quick preview in setup
+      ensureAI(state.players[0]).isNpc = (state.playmode === "NVN");
+      ensureAI(state.players[1]).isNpc = (state.playmode === "PVE" || state.playmode === "NVN" || state.playmode === "DUNGEON");
+      render();
+    };
+  }
+  
+  // ---------------- UI hooks ----------------
+  document.getElementById("confirmSetup").onclick = () => { setupConfirm(); setSetupDefaults(); };
+  document.getElementById("bATK").onclick = () => pickBase("ATK");
+  document.getElementById("bHATK").onclick = () => pickBase("HATK");
+  document.getElementById("bDODGE").onclick = () => pickBase("DODGE");
+  document.getElementById("bBLOCK").onclick = () => pickBase("BLOCK");
+  document.getElementById("restart").onclick = resetAll;
+  document.getElementById("rematch").onclick = rematchWeapons;
+
+  document.getElementById("swap").onclick = () => {
+    if (state.playmode === "PVE") return;
+    if (state.ended) return;
+    if (state.phase === "P1_PICK") alert("Spieler 1 wählt jetzt. Danach Handy weitergeben 🙂");
+    else if (state.phase === "P2_PICK") alert("Spieler 2 wählt jetzt. Danach wird aufgelöst (Speed 0/1/2 + Statusphase) 🙂");
+  };
+
+  document.getElementById("itemBtn").onclick = toggleItemSelect;
+  document.getElementById("itemSelect").onchange = (e) => {
+    const v = e.target.value;
+    // hide after selection attempt
+    e.target.style.display = "none";
+    if (!v) return;
+    useItem(v);
+  };
+
+
+  // ---------------- Dungeon UI hooks ----------------
+  document.getElementById("dungeonFightWinBtn").onclick = dungeonWinFight;
+  document.getElementById("lootConfirmBtn").onclick = confirmDungeonLoot;
+  document.getElementById("levelUpContinueBtn").onclick = continueAfterLevelUp;
+  document.getElementById("invApplyEquipBtn").onclick = invApplyEquip;
+  document.getElementById("invNextFloorBtn").onclick = nextDungeonFloor;
+  document.getElementById("dungeonExitBtn").onclick = exitDungeonToMenu;
+
+  document.getElementById("useHealBtn").onclick = () => useDungeonItem("HEALING_POTION");
+  document.getElementById("useChargeBtn").onclick = () => useDungeonItem("ACTION_CHARGE");
+  document.getElementById("useCurseBtn").onclick = () => useDungeonItem("CURSE_POTION");
+  // Rebuild skill list instantly when weapon changes in inventory (legacy dropdown; ignored if dropdown not present)
+  const invWSelEl = document.getElementById("invWeaponSelect");
+  if (invWSelEl){
+    invWSelEl.onchange = () => {
+      const p = state.players[0];
+      const wSel = document.getElementById("invWeaponSelect");
+      const weaponUid = wSel ? wSel.value : p.equippedWeaponUid;
+      if (weaponUid && weaponUid !== p.equippedWeaponUid){
+        // save current skills then switch
+        readInvSelectedSkills(p);
+equipWeaponByUid(p, weaponUid);
+      }
+      buildInvSkillsUIForPlayer(p);
+      renderDungeonInventory();
+    };
+  }
+
+  resetAll();
+})();
+</script>
+</body></html>
